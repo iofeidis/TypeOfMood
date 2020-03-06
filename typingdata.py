@@ -2,6 +2,7 @@
 #
 # Script for extracting typing session data
 # from .json file to DataFrames
+# for Android devices
 #
 # Iason Ofeidis 2019
 
@@ -30,7 +31,7 @@ def extract(jsonFile):
     #Current Mood
     mood = datasession['CurrentMood']
     # print(mood)
-    #Current Mood
+    #Current Physical State
     physicalstate = datasession['CurrentPhysicalState']
     # print(mood)
     #DownTime
@@ -55,6 +56,26 @@ def extract(jsonFile):
     # pv = []
 
     length = len(datadown)
+
+    # TO DO:
+    #     - 0 < flight time < 3000 ms (3 sec)
+    #     - 0 < hold time < 300 ms (0.3 sec)
+    #     - sumOfCharacters > 5 
+    # Sessions > 10
+
+    # FEATURES (19)
+    #   (statistical characteristics)
+    #   Median, Std. Deviation, Skewness, Kurtosis
+    #     1) Hold Time 
+    #     2) Flight Time 
+    #     3) Speed
+    #     4) Pressure-Flight Rate
+    #   (plain values)
+    #   probably not useful for ML
+    #     5) Duration
+    #     6) Length
+    #     7) Delete Rate
+    
     for p in range(length):
         if p<length-1:
             #FlightTime < 0 are omitted from the sequences
@@ -76,7 +97,7 @@ def extract(jsonFile):
     dr = (datasession['NumDels'])/length
 
     #Duration of Session (in msec)
-    # duration = datasession['StopDateTime']-datasession['StartDateTime']
+    duration = datasession['StopDateTime']-datasession['StartDateTime']
 
     #Convert data lists to Panda.Series
     htseries = pd.Series(ht)
@@ -85,6 +106,7 @@ def extract(jsonFile):
     pfrseries = pd.Series(pfr)
     # pvseries = pd.Series(pv)
 
+    #Is not used in analysis
     #Mean of each Series
     htmean = htseries.mean()
     ftmean = ftseries.mean()
@@ -97,7 +119,7 @@ def extract(jsonFile):
     ftmedian = ftseries.median()
     spmedian = spseries.median()
     pfrmedian = pfrseries.median()
-    # pvmedian = pvseries.median()
+    # pvmean = pvseries.mean()
 
     #Standard Deviation of each Series
     htstd = htseries.std()
@@ -113,7 +135,7 @@ def extract(jsonFile):
     pfrskew = pfrseries.skew()
     # pvskew = pvseries.skew()
 
-    #Mean of each Series
+    #Kurtosis of each Series
     htkurtosis = htseries.kurtosis()
     ftkurtosis = ftseries.kurtosis()
     spkurtosis = spseries.kurtosis()
@@ -140,9 +162,14 @@ def extract(jsonFile):
         'PFR_Skewness':pfrskew, 'PFR_Kurtosis':pfrkurtosis,
         # 'PV_Mean':pvmean, 'PV_Median':pvmedian, 'PV_STD':pvstd,
         # 'PV_Skewness':pvskew, 'PV_Kurtosis':pvkurtosis,
-        # 'Duration':duration,
+        'Duration':duration,
         'Delete_Rate':dr, 'Length':length,
         'Mood':mood, 'Physical_State':physicalstate
+    }
+
+    #Insert session statistics into Statistics Dictionary
+    statistics = {'Keystrokes':length, 'Mood':mood,
+        'Physical_State':physicalstate
     }
 
     # distance = df.loc['Distance'][0]
@@ -150,13 +177,23 @@ def extract(jsonFile):
     #Open .csv file and append variables
     file_exists = os.path.isfile('./output.csv')
 
-    with open('output.csv', 'a', newline='') as csvfile:
+    with open('output.csv', 'a', newline='') as csvfile:    
         fieldnames = variables.keys()    
         writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
         if not file_exists:
             writer.writeheader()
         writer.writerow(variables)
+
+    #Open .csv file and append statistics 
+    file_exists = os.path.isfile('./statistics.csv')
     
+    with open('statistics.csv', 'a', newline='') as csvfile:
+        fieldnames = statistics.keys()        
+        writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(statistics)
+
     return 
 
 #Function for looping across all files in a directory
@@ -172,7 +209,7 @@ def filesextract(dirname):
             if filename.endswith('.csv'):
                 os.remove(filename)
 
-    #Loop across all files and create output.csv
+    #Loop across all files and create output.csv and statistics.csv
     #containing typingdata of each session                
     os.chdir(dirname)
     for root, dirs, files in os.walk(dirname, topdown = False):
@@ -192,3 +229,4 @@ def process(csvfile):
     data = pd.read_csv(csvfile)
     df = pd.DataFrame(data)
     return df
+

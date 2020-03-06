@@ -103,23 +103,24 @@ def extract(jsonFile):
 
     length = len(rawValues['accelerometerX'])
 
-    for p in range(length):
-        if p<length-1:
-            #AccelerometerMagnitude
-            x = np.array([rawValues['accelerometerX'],\
-                rawValues['accelerometerY'],rawValues['accelerometerZ']])
-            am.append(np.linarg.norm(x))
-            #AccelerometerAngle in degrees
-            x = np.array([rawValues['accelerometerX'],\
-                rawValues['accelerometerY'])
-            denum = np.linarg.norm(x)
-            y = rawValues['accelerometerZ']/denum
-            aa.append(np.arctan(y*(180/np.pi)))
-            #GyroscopeMagnitude
-            x = np.array([rawValues['gyroscopeX'],\
-                rawValues['gyroscopeY'],rawValues['gyroscopeZ']])
-            gm.append(np.linarg.norm(x))
-        else: break
+    #Not needed right now
+    # for p in range(length):
+    #     if p<length-1:
+    #         #AccelerometerMagnitude
+    #         x = np.array([rawValues['accelerometerX'],\
+    #             rawValues['accelerometerY'],rawValues['accelerometerZ']])
+    #         am.append(np.linarg.norm(x))
+    #         #AccelerometerAngle in degrees
+    #         x = np.array([rawValues['accelerometerX'],\
+    #             rawValues['accelerometerY'])
+    #         denum = np.linarg.norm(x)
+    #         y = rawValues['accelerometerZ']/denum
+    #         aa.append(np.arctan(y*(180/np.pi)))
+    #         #GyroscopeMagnitude
+    #         x = np.array([rawValues['gyroscopeX'],\
+    #             rawValues['gyroscopeY'],rawValues['gyroscopeZ']])
+    #         gm.append(np.linarg.norm(x))
+    #     else: break
     
     #dr: Delete Rate
     dr = (datasession['NumDels'])/length
