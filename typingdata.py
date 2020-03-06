@@ -210,15 +210,62 @@ def filesextract(dirname):
                 os.remove(filename)
 
     #Loop across all files and create output.csv and statistics.csv
-    #containing typingdata of each session                
+    #containing typingdata of all sessions in a day                
     os.chdir(dirname)
     for root, dirs, files in os.walk(dirname, topdown = False):
         for filename in files:
-            # print(os.path.join(root, filename))
+            #print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
             if filename.endswith('.json'):
                 # print(filename)
                 extract(filename)
+
+    #Create statistics.csv by merging all .csv in folders below
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(dirname, topdown = False):
+        os.chdir(dirname)
+        for filename in files:
+            # print(os.path.join(root, filename))
+            os.chdir(os.path.abspath(root))
+            if filename.endswith('statistics.csv'):
+                data = pd.read_csv(filename)
+                fieldnames = ['Keystrokes', 'Mood', 'Physical_State']
+                df = pd.DataFrame(data)
+                # print(statistics)
+                os.chdir(dirname)
+
+                # os.chdir(os.path.join(root,dir))
+                os.chdir(dirname)
+                #Open .csv file and append statistics
+                #Needed for header 
+                file_exists = os.path.isfile('./statistics_user.csv')
+            
+                with open('statistics_user.csv', 'a', newline='') as csvfile:
+                    fieldnames = ['Keystrokes', 'Mood', 'Physical_State']        
+                    writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
+                    if not file_exists:
+                        writer.writeheader()
+
+                df.to_csv('statistics_user.csv', mode = 'a', index = False,\
+                            header = False)
+        
+    
+    return
+
+#Function for looping across all users
+def users(dirname):
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(dirname, topdown = False):
+        for dir in dirs:
+            if ('2020' not in dir) and ('2019' not in dir):
+                # print(os.path.join(root, filename))
+                os.chdir(os.path.join(root,dir))
+                # print(os.path.join(root,dir))
+                # print(dir)
+                filesextract(os.path.join(root,dir))
+
+    return
+
 
 
 #?Preprocessing?
