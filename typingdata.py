@@ -46,6 +46,13 @@ def extract(jsonFile):
     # pressure = datasession['PressureValue']
     # print(islongpress)
 
+    #UserID
+    userid = data['USER_ID']
+    #UserAge
+    userage = data['USER_AGE']
+    #UserGender
+    usergender = data['USER_GENDER']
+
     #ht: HoldTime, ft: FlightTime
     #sp: Speed, pfr: Press-Flight-Rate
     #pv: Pressure Values
@@ -168,7 +175,8 @@ def extract(jsonFile):
     }
 
     #Insert session statistics into Statistics Dictionary
-    statistics = {'Keystrokes':length, 'Mood':mood,
+    statistics = {'UserID': userid, 'User_Age': userage,\
+        'User_Gender': usergender, 'Keystrokes':length, 'Mood':mood,
         'Physical_State':physicalstate
     }
 
@@ -229,7 +237,8 @@ def filesextract(dirname):
             os.chdir(os.path.abspath(root))
             if filename.endswith('statistics.csv'):
                 data = pd.read_csv(filename)
-                fieldnames = ['Keystrokes', 'Mood', 'Physical_State']
+                fieldnames = ['UserID', 'User_Age', 'User_Gender',\
+                    'Keystrokes', 'Mood', 'Physical_State']
                 df = pd.DataFrame(data)
                 # print(statistics)
                 os.chdir(dirname)
@@ -241,7 +250,8 @@ def filesextract(dirname):
                 file_exists = os.path.isfile('./statistics_user.csv')
             
                 with open('statistics_user.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['Keystrokes', 'Mood', 'Physical_State']        
+                    fieldnames = ['UserID', 'User_Age', 'User_Gender',\
+                        'Keystrokes', 'Mood', 'Physical_State']
                     writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
                     if not file_exists:
                         writer.writeheader()
@@ -264,6 +274,29 @@ def users(dirname):
                 # print(dir)
                 filesextract(os.path.join(root,dir))
 
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(dirname, topdown = False):
+        for filename in files:
+            os.chdir(os.path.abspath(root))
+            if filename.endswith('user.csv'):
+                df = process(filename)
+                os.chdir(dirname)
+                #Open .csv file and append total statistics
+                #Needed for header 
+                file_exists = os.path.isfile('./statistics_total.csv')
+            
+                with open('statistics_total.csv', 'a', newline='') as csvfile:
+                    fieldnames = ['UserID', 'User_Age', 'User_Gender',\
+                            'Keystrokes_Mean', 'Happy',\
+                        'Sad', 'Neutral', 'Postponing', 'undefined']        
+                    writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
+                    if not file_exists:
+                        writer.writeheader()
+
+                df.to_csv('statistics_total.csv', mode = 'a', index = False,\
+                            header = False)
+        
+                
     return
 
 
@@ -275,5 +308,28 @@ def users(dirname):
 def process(csvfile):
     data = pd.read_csv(csvfile)
     df = pd.DataFrame(data)
+    kf = df.head(1)
+    userid = kf.squeeze('rows')['UserID']
+    userage = kf.squeeze('rows')['User_Age']
+    usergender = kf.squeeze('rows')['User_Gender']
+    keystrokesmean = df['Keystrokes'].mean()
+    happy = len(df[df['Mood'] == 'Happy']) + \
+            len(df[df['Mood'] == 'Happy TIMEOUT'])
+    sad = len(df[df['Mood'] == 'Sad']) + \
+            len(df[df['Mood'] == 'Sad TIMEOUT'])
+    postponing = len(df[df['Mood'] == 'Postponing']) + \
+            len(df[df['Mood'] == 'Postponing TIMEOUT'])
+    undefined = len(df[df['Mood'] == 'undefined']) + \
+            len(df[df['Mood'] == 'undefined TIMEOUT'])
+            
+    statistics = {'UserID':userid, 'User_Age':userage,\
+        'User_Gender':usergender,\
+        'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
+            'Sad': sad, 'Postponing': postponing, 'Undefined':undefined}
+
+    fieldnames = ['UserID', 'User_Age', 'User_Gender',\
+                'Keystrokes_Mean', 'Happy',\
+                 'Sad', 'Neutral', 'Postponing', 'undefined']
+    df = pd.DataFrame.from_dict([statistics])
     return df
 
