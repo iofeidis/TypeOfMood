@@ -1,31 +1,10 @@
-# typingdataios.py
+# statisticsios.py
 #
-# Script for extracting typing session data
+# Script for extracting statistics of session data
 # from .json file to DataFrames
 # for iOS devices
 #
 # Iason Ofeidis 2019
-
-# TO DO:
-#     - 0 < flight time < 3000 ms (3 sec)
-#     - 0 < hold time < 300 ms (0.3 sec)
-#     - sumOfCharacters > 5 
-#  Sessions > 10
-
-# FEATURES (33)
-#   (statistical characteristics)
-#   Mean, Median, Std. Deviation, Skewness, Kurtosis
-#     1) Hold Time 
-#     2) Flight Time 
-#     3) Pressure (No Values?)
-#     4) Accelerometer Magnitude
-#     5) Accelerometer Angle
-#     6) Gyroscope Magnitude
-#   (plain values)
-#   probably not useful for ML
-#     7) Duration
-#     8) Length
-#     9) Delete Rate
 
 import json
 import pandas as pd 
@@ -44,81 +23,6 @@ def keystrokes(jsonFile):
     # Data Acquisition from JSON files
     with open(jsonFile) as json_file:
         datasession = json.load(json_file)
-
-    # DownTime
-    datadown = (datasession['startTimeOfKeyPressed'])
-    # Uptime
-    dataup = (datasession['stopTimeOfKeyPressed'])
-    # Euclidean Distance
-    distance = datasession['distanceBetweenKeys']
-    # Deliberately Long Pressed Button
-    islongpress = datasession['longPressed']
-    # PressureValues
-    pressure = datasession['pressureMax']
-    # print(islongpress)
-
-
-
-    # #ht: HoldTime, ft: FlightTime
-    # #am: AccelerometerMagnitude, aa: AccelerometerAngle,
-    # #gm: GyroscopeMagnitude, pv: Pressure Values
-    # ht = []
-    # ft = []
-    # am = []
-    # aa = []
-    # gm = []
-    # pv = []
-
-    # length = datasession['sumOfCharacters']
-
-    # for p in range(length):
-    #     if p<length-1:
-    #         #FlightTime < 0 are omitted from the sequences
-    #         #HoldTime > 300 are excluded from the sequences
-    #         # map function
-    #         if ((datadown[p+1] - dataup[p]) > 0) and (islongpress[p]== 0):
-    #             ft.append(datadown[p+1] - dataup[p])
-    #             ht.append(dataup[p] - datadown[p])
-    #             pv.append(pressure[p])
-    #     else: break
-
-    # Total Number of Characters
-    # ?is length(ht) == sumOfCharacters?
-    # length = len(ht)
-
-    # for p in range(length-1):
-    #     sp.append(distance[p]/ft[p])
-    #     pfr.append(ht[p]/ft[p])
-    
-    # dr: Delete Rate
-    # dr = (datasession['NumDels'])/length
-
-    # Duration of Session (in msec)
-    # duration = datasession['StopDateTime']-datasession['StartDateTime']
-
-    # length = len(rawValues['accelerometerX'])
-
-    # Not needed right now
-    # for p in range(length):
-    #     if p<length-1:
-    #         #AccelerometerMagnitude
-    #         x = np.array([rawValues['accelerometerX'],\
-    #             rawValues['accelerometerY'],rawValues['accelerometerZ']])
-    #         am.append(np.linarg.norm(x))
-    #         #AccelerometerAngle in degrees
-    #         x = np.array([rawValues['accelerometerX'],\
-    #             rawValues['accelerometerY'])
-    #         denum = np.linarg.norm(x)
-    #         y = rawValues['accelerometerZ']/denum
-    #         aa.append(np.arctan(y*(180/np.pi)))
-    #         #GyroscopeMagnitude
-    #         x = np.array([rawValues['gyroscopeX'],\
-    #             rawValues['gyroscopeY'],rawValues['gyroscopeZ']])
-    #         gm.append(np.linarg.norm(x))
-    #     else: break
-    
-    # dr: Delete Rate
-    # dr = (datasession['NumDels'])/length
 
     # Length of Characters
     keystrokes = datasession['sumOfCharacters']
@@ -232,6 +136,8 @@ def filesextract(dirname):
     # Create statistics.csv by merging all .csv in folders below
     os.chdir(dirname)
     flagstat = flagemotion = False
+    pathstat = os.path.abspath('/home')
+    pathemotion = os.path.abspath('/home/jason')
     for root, dirs, files in os.walk(dirname, topdown=False):
         os.chdir(dirname)
         for filename in files:
@@ -243,39 +149,48 @@ def filesextract(dirname):
                 dfstat = pd.DataFrame(data)
                 pathstat = os.path.abspath(root)
                 flagstat = True
+                # print('pathstat is ' + os.path.join(root, filename))
             elif filename.endswith('emotion.csv'):
                 data = pd.read_csv(filename)
                 fieldnames = ['Mood', 'Physical_State']
                 dfemotion = pd.DataFrame(data)
                 pathemotion = os.path.abspath(root)
                 flagemotion = True
-            if flagstat and flagemotion\
-               and pathstat == pathemotion:
-                os.chdir(dirname)
+                # print('pathemotion is ' + os.path.join(root, filename))
+            if pathstat == pathemotion and filename.endswith('.csv'):
+                # print('pathstat == pathemotion')
+                if flagstat and flagemotion:
+                    # print('flagstat == flagemotion')
+               
+                    os.chdir(dirname)
 
-                df = pd.concat([dfstat, dfemotion], axis=1)
-                # Propagation to fill empty emotions
-                df = df.fillna(method='ffill')
+                    df = pd.concat([dfstat, dfemotion], axis=1)
+                    # Propagation to fill empty emotions
+                    df = df.fillna(method='ffill')
 
-                # Open .csv file and append statistics
-                # Needed for header 
-                file_exists = os.path.isfile('./statistics_user.csv')
-            
-                with open('statistics_user.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['Keystrokes', 'Mood', 'Physical_State']
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                    if not file_exists:
-                        writer.writeheader()
+                    # Open .csv file and append statistics
+                    # Needed for header 
+                    file_exists = os.path.isfile('./statistics_user.csv')
+                
+                    with open('statistics_user.csv', 'a', newline='') as csvfile:
+                        fieldnames = ['Keystrokes', 'Mood', 'Physical_State']
+                        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                        if not file_exists:
+                            writer.writeheader()
 
-                df.to_csv('statistics_user.csv', mode='a', index=False,
-                          header=False)
+                    df.to_csv('statistics_user.csv', mode='a', index=False,
+                              header=False)
 
-                flagemotion = False
+                    flagemotion = False
+                    flagstat = False
+                    # pathstat = os.path.abspath('/home')
+                    # pathinfo = os.path.abspath('/home/jason')
+            elif pathstat != pathemotion and filename.endswith('.csv'):
+                # print('pathstat != pathemotion')
+                # print('pathstat is ' + pathstat)
+                # print('pathemotion is ' + pathemotion)
                 flagstat = False
-            elif flagstat and flagemotion and\
-                    pathstat != pathemotion:
-                flagstat = False
-                flaginfo = False
+                # flagemotion = False
         
 
 # Function for looping across all users
@@ -296,6 +211,7 @@ def users(dirname):
     os.chdir(dirname)
     for root, dirs, files in os.walk(dirname, topdown=False):
         for dir in dirs:
+            # Only user files
             if ('2020' not in dir) and ('2019' not in dir):
                 # print(os.path.join(root, filename))
                 os.chdir(os.path.join(root, dir))
@@ -335,7 +251,7 @@ def users(dirname):
                     # print(df)
 
                     with open('statistics_total.csv', 'a', newline='') as csvfile:
-                        fieldnames = ['UserID','User_Age', 'User_Gender',
+                        fieldnames = ['UserID', 'User_Age', 'User_Gender',
                                       'Keystrokes_Mean', 'Happy',
                                       'Sad', 'Neutral', 'Postponing', 'undefined',
                                       'Sessions_Number']        
@@ -347,8 +263,7 @@ def users(dirname):
                               header=False)
 
                     flagstat = False
-                    flaginfo = False
-                    pathstat = pathinfo = os.path.abspath(dirname)
+                    flaginfo = False    
             elif pathstat != pathinfo: 
                 # info.json is first accessed in every folder
                 flaginfo = False

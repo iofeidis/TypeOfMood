@@ -8,54 +8,56 @@
 
 import json
 import pandas as pd 
-import numpy as np 
-import sys
+# import numpy as np 
+# import sys
 import os
 import csv
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 # jsonFile = sys.argv[0]
 
 # Function for extracting typing session data
 # from .json file to .csv file
 #
+
+
 def extract(jsonFile):
-    #Data Acquisition from JSON files
+    # Data Acquisition from JSON files
     with open(jsonFile) as json_file:
         data = json.load(json_file)
     # print(data.keys())
-    #Keeping only SESSION_DATA from json file
+    # Keeping only SESSION_DATA from json file
     datasession = json.loads(data['SESSION_DATA'])
     # print(datasession.keys())
 
-    #Current Mood
+    # Current Mood
     mood = datasession['CurrentMood']
     # print(mood)
-    #Current Physical State
+    # Current Physical State
     physicalstate = datasession['CurrentPhysicalState']
     # print(mood)
-    #DownTime
-    datadown =(datasession['DownTime'])
-    #Uptime
+    # DownTime
+    datadown = (datasession['DownTime'])
+    # Uptime
     dataup = (datasession['UpTime'])
-    #Euclidean Distance
+    # Euclidean Distance
     distance = datasession['Distance']
-    #Deliberately Long Pressed Button
+    # Deliberately Long Pressed Button
     islongpress = datasession['IsLongPress']
-    #PressureValues
+    # PressureValues
     # pressure = datasession['PressureValue']
     # print(islongpress)
 
-    #UserID
+    # UserID
     userid = data['USER_ID']
-    #UserAge
+    # UserAge
     userage = data['USER_AGE']
-    #UserGender
+    # UserGender
     usergender = data['USER_GENDER']
 
-    #ht: HoldTime, ft: FlightTime
-    #sp: Speed, pfr: Press-Flight-Rate
-    #pv: Pressure Values
+    # ht: HoldTime, ft: FlightTime
+    # sp: Speed, pfr: Press-Flight-Rate
+    # pv: Pressure Values
     ht = []
     ft = []
     sp = []
@@ -67,14 +69,14 @@ def extract(jsonFile):
     # TO DO:
     #     - 0 < flight time < 3000 ms (3 sec)
     #     - 0 < hold time < 300 ms (0.3 sec)
-    #     - sumOfCharacters > 5 
+    #     - sumOfCharacters > 5
     # Sessions > 10
 
     # FEATURES (19)
     #   (statistical characteristics)
     #   Median, Std. Deviation, Skewness, Kurtosis
-    #     1) Hold Time 
-    #     2) Flight Time 
+    #     1) Hold Time
+    #     2) Flight Time
     #     3) Speed
     #     4) Pressure-Flight Rate
     #   (plain values)
@@ -82,254 +84,258 @@ def extract(jsonFile):
     #     5) Duration
     #     6) Length
     #     7) Delete Rate
-    
     for p in range(length):
-        if p<length-1:
-            #FlightTime < 0 are omitted from the sequences
-            #HoldTime > 300 are excluded from the sequences
-            if ((datadown[p+1] - dataup[p]) > 0) and (islongpress[p]== 0):
-                ft.append(datadown[p+1] - dataup[p])
+        if p < length - 1:
+            # FlightTime < 0 are omitted from the sequences
+            # HoldTime > 300 are excluded from the sequences
+            if ((datadown[p + 1] - dataup[p]) > 0) and (islongpress[p] == 0):
+                ft.append(datadown[p + 1] - dataup[p])
                 ht.append(dataup[p] - datadown[p])
                 # pv.append(pressure[p])
-        else: break
+        else:
+            break
 
-    #Total Number of Characters 
+    # Total Number of Characters
     length = len(ht)
 
-    for p in range(length-1):
-        sp.append(distance[p]/ft[p])
-        pfr.append(ht[p]/ft[p])
-    
-    #dr: Delete Rate
-    dr = (datasession['NumDels'])/length
+    for p in range(length - 1):
+        sp.append(distance[p] / ft[p])
+        pfr.append(ht[p] / ft[p])
+    # dr: Delete Rate
+    dr = (datasession['NumDels']) / length
 
-    #Duration of Session (in msec)
-    duration = datasession['StopDateTime']-datasession['StartDateTime']
+    # Duration of Session (in msec)
+    duration = datasession['StopDateTime'] - datasession['StartDateTime']
 
-    #Convert data lists to Panda.Series
+    # Convert data lists to Panda.Series
     htseries = pd.Series(ht)
     ftseries = pd.Series(ft)
     spseries = pd.Series(sp)
     pfrseries = pd.Series(pfr)
     # pvseries = pd.Series(pv)
 
-    #Is not used in analysis
-    #Mean of each Series
+    # Is not used in analysis
+    # Mean of each Series
     htmean = htseries.mean()
     ftmean = ftseries.mean()
     spmean = spseries.mean()
     pfrmean = pfrseries.mean()
     # pvmean = pvseries.mean()
 
-    #Median of each Series
+    # Median of each Series
     htmedian = htseries.median()
     ftmedian = ftseries.median()
     spmedian = spseries.median()
     pfrmedian = pfrseries.median()
     # pvmean = pvseries.mean()
 
-    #Standard Deviation of each Series
+    # Standard Deviation of each Series
     htstd = htseries.std()
     ftstd = ftseries.std()
     spstd = spseries.std()
     pfrstd = pfrseries.std()
     # pvstd = pvseries.std()
 
-    #Skewness of each Series
+    # Skewness of each Series
     htskew = htseries.skew()
     ftskew = ftseries.skew()
     spskew = spseries.skew()
     pfrskew = pfrseries.skew()
     # pvskew = pvseries.skew()
 
-    #Kurtosis of each Series
+    # Kurtosis of each Series
     htkurtosis = htseries.kurtosis()
     ftkurtosis = ftseries.kurtosis()
     spkurtosis = spseries.kurtosis()
     pfrkurtosis = pfrseries.kurtosis()
     # pvkurtosis = pvseries.kurtosis()
-    
-    
-    #Plot data
+    # Plot data
     # htseries.plot.box()
     # plt.show()
-    
     # print(htstd)
     # print(htskew)
     # print(htkurtosis)
-    
-    #Insert Characteristics into Variables Dictionary
-    variables = {'HT_Mean':htmean, 'HT_Median':htmedian, 'HT_STD':htstd,
-        'HT_Skewness':htskew, 'HT_Kurtosis':htkurtosis,
-        'FT_Mean':ftmean, 'FT_Median':ftmedian, 'FT_STD':ftstd,
-        'FT_Skewness':ftskew, 'FT_Kurtosis':ftkurtosis,
-        'SP_Mean':spmean, 'SP_Median':spmedian, 'SP_STD':spstd,
-        'SP_Skewness':spskew, 'SP_Kurtosis':spkurtosis,
-        'PFR_Mean':pfrmean, 'PFR_Median':pfrmedian, 'PFR_STD':pfrstd,
-        'PFR_Skewness':pfrskew, 'PFR_Kurtosis':pfrkurtosis,
-        # 'PV_Mean':pvmean, 'PV_Median':pvmedian, 'PV_STD':pvstd,
-        # 'PV_Skewness':pvskew, 'PV_Kurtosis':pvkurtosis,
-        'Duration':duration,
-        'Delete_Rate':dr, 'Length':length,
-        'Mood':mood, 'Physical_State':physicalstate
-    }
+    # Insert Characteristics into Variables Dictionary
+    variables = {'HT_Mean': htmean, 'HT_Median': htmedian, 'HT_STD': htstd,
+                 'HT_Skewness': htskew, 'HT_Kurtosis': htkurtosis,
+                 'FT_Mean': ftmean, 'FT_Median': ftmedian, 'FT_STD': ftstd,
+                 'FT_Skewness': ftskew, 'FT_Kurtosis': ftkurtosis,
+                 'SP_Mean': spmean, 'SP_Median': spmedian, 'SP_STD': spstd,
+                 'SP_Skewness': spskew, 'SP_Kurtosis': spkurtosis,
+                 'PFR_Mean': pfrmean, 'PFR_Median': pfrmedian, 'PFR_STD': pfrstd,
+                 'PFR_Skewness': pfrskew, 'PFR_Kurtosis': pfrkurtosis,
+                 # 'PV_Mean': pvmean, 'PV_Median': pvmedian, 'PV_STD': pvstd,
+                 # 'PV_Skewness': pvskew, 'PV_Kurtosis': pvkurtosis,
+                 'Duration': duration,
+                 'Delete_Rate': dr, 'Length': length,
+                 'Mood': mood, 'Physical_State': physicalstate}
 
-    #Insert session statistics into Statistics Dictionary
-    statistics = {'UserID': userid, 'User_Age': userage,\
-        'User_Gender': usergender, 'Keystrokes':length, 'Mood':mood,
-        'Physical_State':physicalstate
-    }
+    # Insert session statistics into Statistics Dictionary
+    statistics = {'UserID': userid, 'User_Age': userage,
+                  'User_Gender': usergender, 'Keystrokes': length,
+                  'Mood': mood, 'Physical_State': physicalstate}
 
     # distance = df.loc['Distance'][0]
 
-    #Open .csv file and append variables
+    # Open .csv file and append variables
     file_exists = os.path.isfile('./output.csv')
 
-    with open('output.csv', 'a', newline='') as csvfile:    
-        fieldnames = variables.keys()    
-        writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
+    with open('output.csv', 'a', newline='') as csvfile:
+        fieldnames = variables.keys()
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         if not file_exists:
             writer.writeheader()
         writer.writerow(variables)
 
-    #Open .csv file and append statistics 
+    # Open .csv file and append statistics
     file_exists = os.path.isfile('./statistics.csv')
-    
     with open('statistics.csv', 'a', newline='') as csvfile:
-        fieldnames = statistics.keys()        
-        writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
+        fieldnames = statistics.keys()
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
         if not file_exists:
             writer.writeheader()
         writer.writerow(statistics)
 
-    return 
+    return
 
-#Function for looping across all files in a directory
+# Function for looping across all files in a directory
+
+
 def filesextract(dirname):
     # os.chdir("d:\\tmp")
     os.chdir(dirname)
 
-    #Remove existing .csv files
-    for root, dirs, files in os.walk(dirname, topdown = False):
+    # Remove existing .csv files
+    for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
             # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
             if filename.endswith('.csv'):
                 os.remove(filename)
 
-    #Loop across all files and create output.csv and statistics.csv
-    #containing typingdata of all sessions in a day                
+    # Loop across all files and create output.csv and statistics.csv
+    # containing typingdata of all sessions in a day
     os.chdir(dirname)
-    for root, dirs, files in os.walk(dirname, topdown = False):
+    for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
-            #print(os.path.join(root, filename))
+            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
             if filename.endswith('.json'):
                 # print(filename)
                 extract(filename)
 
-    #Create statistics.csv by merging all .csv in folders below
+    # Create statistics.csv by merging all .csv in folders below
     os.chdir(dirname)
-    for root, dirs, files in os.walk(dirname, topdown = False):
+    for root, dirs, files in os.walk(dirname, topdown=False):
         os.chdir(dirname)
         for filename in files:
             # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
             if filename.endswith('statistics.csv'):
                 data = pd.read_csv(filename)
-                fieldnames = ['UserID', 'User_Age', 'User_Gender',\
-                    'Keystrokes', 'Mood', 'Physical_State']
+                fieldnames = ['UserID', 'User_Age', 'User_Gender',
+                              'Keystrokes', 'Mood', 'Physical_State']
                 df = pd.DataFrame(data)
                 # print(statistics)
                 os.chdir(dirname)
 
                 # os.chdir(os.path.join(root,dir))
                 os.chdir(dirname)
-                #Open .csv file and append statistics
-                #Needed for header 
+                # Open .csv file and append statistics
+                # Needed for header
                 file_exists = os.path.isfile('./statistics_user.csv')
-            
                 with open('statistics_user.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['UserID', 'User_Age', 'User_Gender',\
-                        'Keystrokes', 'Mood', 'Physical_State']
-                    writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
+                    fieldnames = ['UserID', 'User_Age', 'User_Gender',
+                                  'Keystrokes', 'Mood', 'Physical_State']
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
 
-                df.to_csv('statistics_user.csv', mode = 'a', index = False,\
-                            header = False)
-        
-    
+                df.to_csv('statistics_user.csv', mode='a', index=False,
+                          header=False)
     return
 
-#Function for looping across all users
+# Function for looping across all users
+
+
 def users(dirname):
     os.chdir(dirname)
-    for root, dirs, files in os.walk(dirname, topdown = False):
+
+    # Remove existing .csv files
+    for root, dirs, files in os.walk(dirname, topdown=False):
+        for filename in files:
+            # print(os.path.join(root, filename))
+            os.chdir(os.path.abspath(root))
+            if filename.endswith('.csv'):
+                os.remove(filename)
+
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(dirname, topdown=False):
         for dir in dirs:
             if ('2020' not in dir) and ('2019' not in dir):
                 # print(os.path.join(root, filename))
-                os.chdir(os.path.join(root,dir))
+                os.chdir(os.path.join(root, dir))
                 # print(os.path.join(root,dir))
                 # print(dir)
-                filesextract(os.path.join(root,dir))
+                filesextract(os.path.join(root, dir))
 
     os.chdir(dirname)
-    for root, dirs, files in os.walk(dirname, topdown = False):
+    for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
             os.chdir(os.path.abspath(root))
             if filename.endswith('user.csv'):
                 df = process(filename)
                 os.chdir(dirname)
-                #Open .csv file and append total statistics
-                #Needed for header 
-                file_exists = os.path.isfile('./statistics_total.csv')
-            
+                # Open .csv file and append total statistics
+                # Needed for header
+                file_exists = os.path.isfile('./statistics_total.csv')            
                 with open('statistics_total.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['UserID', 'User_Age', 'User_Gender',\
-                            'Keystrokes_Mean', 'Happy',\
-                        'Sad', 'Neutral', 'Postponing', 'undefined']        
-                    writer = csv.DictWriter(csvfile, fieldnames = fieldnames)
+                    fieldnames = ['UserID', 'User_Age', 'User_Gender',
+                                  'Keystrokes_Mean', 'Happy',
+                                  'Sad', 'Neutral', 'Postponing', 'undefined',
+                                  'Session_Number']        
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
 
-                df.to_csv('statistics_total.csv', mode = 'a', index = False,\
-                            header = False)
-        
-                
+                df.to_csv('statistics_total.csv', mode='a', index=False,
+                          header=False)
     return
 
-
-
-#?Preprocessing?
+# ?Preprocessing?
 # Remove duplicates
 
-#Function for processing DataFrame of typing data
+# Function for processing DataFrame of typing data
+# Opens 'statistics_user.csv' and saves it to df
+
+
 def process(csvfile):
     data = pd.read_csv(csvfile)
     df = pd.DataFrame(data)
     kf = df.head(1)
+    sessionsnumber = len(df)
     userid = kf.squeeze('rows')['UserID']
     userage = kf.squeeze('rows')['User_Age']
     usergender = kf.squeeze('rows')['User_Gender']
-    keystrokesmean = df['Keystrokes'].mean()
+    keystrokesmean = round(df['Keystrokes'].mean(), 2)
     happy = len(df[df['Mood'] == 'Happy']) + \
-            len(df[df['Mood'] == 'Happy TIMEOUT'])
+        len(df[df['Mood'] == 'Happy TIMEOUT'])
     sad = len(df[df['Mood'] == 'Sad']) + \
-            len(df[df['Mood'] == 'Sad TIMEOUT'])
+        len(df[df['Mood'] == 'Sad TIMEOUT'])
+    neutral = len(df[df['Mood'] == 'Neutral']) + \
+        len(df[df['Mood'] == 'Neutral TIMEOUT'])
     postponing = len(df[df['Mood'] == 'Postponing']) + \
-            len(df[df['Mood'] == 'Postponing TIMEOUT'])
+        len(df[df['Mood'] == 'Postponing TIMEOUT'])
     undefined = len(df[df['Mood'] == 'undefined']) + \
-            len(df[df['Mood'] == 'undefined TIMEOUT'])
-            
-    statistics = {'UserID':userid, 'User_Age':userage,\
-        'User_Gender':usergender,\
-        'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
-            'Sad': sad, 'Postponing': postponing, 'Undefined':undefined}
+        len(df[df['Mood'] == 'undefined TIMEOUT'])            
+    statistics = {'UserID': userid, 'User_Age': userage,
+                  'User_Gender': usergender,
+                  'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
+                  'Sad': sad, 'Neutral': neutral, 'Postponing': postponing,
+                  'Undefined': undefined, 'Sessions_Number': sessionsnumber}
 
-    fieldnames = ['UserID', 'User_Age', 'User_Gender',\
-                'Keystrokes_Mean', 'Happy',\
-                 'Sad', 'Neutral', 'Postponing', 'undefined']
+    # fieldnames = ['UserID', 'User_Age', 'User_Gender',
+    #               'Keystrokes_Mean', 'Happy',
+    #               'Sad', 'Neutral', 'Postponing', 'undefined']
     df = pd.DataFrame.from_dict([statistics])
     return df
-

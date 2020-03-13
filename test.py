@@ -1,12 +1,15 @@
 import os
-import typingdataios
+import statisticsios
 
 os.chdir('/home/jason/Documents/Thesis/TypingData/iOS')
-# typingdataios.filesextract(os.getcwd())
-typingdataios.users(os.getcwd())
+# statisticsios.filesextract(os.getcwd())
+statisticsios.users(os.getcwd())
 
-# import typingdata
+# import statistics
 
 # os.chdir('/home/jason/Documents/Thesis/TypingData/test')
-# # typingdata.filesextract(os.getcwd())
-# typingdata.users(os.getcwd())
+# # statistics.filesextract(os.getcwd())
+# statistics.users(os.getcwd())
+
+# import typingdataios
+# typingdataios.users(os.getcwd())
