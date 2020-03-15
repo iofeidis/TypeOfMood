@@ -14,8 +14,6 @@ import os
 import csv
 # import matplotlib.pyplot as plt
 
-# jsonFile = sys.argv[0]
-
 # Function for extracting typing session data
 # from .json file to .csv file
 #
@@ -25,17 +23,13 @@ def extract(jsonFile):
     # Data Acquisition from JSON files
     with open(jsonFile) as json_file:
         data = json.load(json_file)
-    # print(data.keys())
     # Keeping only SESSION_DATA from json file
     datasession = json.loads(data['SESSION_DATA'])
-    # print(datasession.keys())
 
     # Current Mood
     mood = datasession['CurrentMood']
-    # print(mood)
     # Current Physical State
     physicalstate = datasession['CurrentPhysicalState']
-    # print(mood)
     # DownTime
     datadown = (datasession['DownTime'])
     
@@ -57,10 +51,9 @@ def extract(jsonFile):
     # Insert session statistics into Statistics Dictionary
     statistics = {'UserID': userid, 'User_Age': userage,
                   'User_Gender': usergender, 'Keystrokes': length,
-                  'Mood': mood, 'Physical_State': physicalstate
-                  }
+                  'Mood': mood, 'Physical_State': physicalstate}
 
-    # Open .csv file and append statistics
+    # Open statistics.csv file and append statistics
     file_exists = os.path.isfile('./statistics.csv')
     with open('statistics.csv', 'a', newline='') as csvfile:
         fieldnames = statistics.keys()
@@ -75,7 +68,6 @@ def extract(jsonFile):
 
 
 def filesextract(dirname):
-    # os.chdir("d:\\tmp")
     os.chdir(dirname)
 
     # Remove existing statistics related .csv files
@@ -92,10 +84,8 @@ def filesextract(dirname):
     os.chdir(dirname)
     for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
             if filename.endswith('.json'):
-                # print(filename)
                 extract(filename)
 
     # Create statistics.csv by merging all .csv in folders below
@@ -103,17 +93,12 @@ def filesextract(dirname):
     for root, dirs, files in os.walk(dirname, topdown=False):
         os.chdir(dirname)
         for filename in files:
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
             if filename.endswith('statistics.csv'):
                 data = pd.read_csv(filename)
                 fieldnames = ['UserID', 'User_Age', 'User_Gender',
                               'Keystrokes', 'Mood', 'Physical_State']
                 df = pd.DataFrame(data)
-                # print(statistics)
-                os.chdir(dirname)
-
-                # os.chdir(os.path.join(root,dir))
                 os.chdir(dirname)
                 # Open .csv file and append statistics
                 # Needed for header
@@ -124,7 +109,6 @@ def filesextract(dirname):
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
-
                 df.to_csv('statistics_user.csv', mode='a', index=False,
                           header=False)
     return
@@ -134,23 +118,21 @@ def filesextract(dirname):
 
 def users(dirname):
     os.chdir(dirname)
-
     # Remove existing .csv files
     for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
-            if filename.endswith('.csv'):
+            if filename.endswith('statistics.csv') or\
+               filename.endswith('statistics_user.csv') or\
+               filename.endswith('statistics_total.csv'):
                 os.remove(filename)
 
     os.chdir(dirname)
     for root, dirs, files in os.walk(dirname, topdown=False):
         for dir in dirs:
+            # If directory refers to user and not a day of sessions
             if ('2020' not in dir) and ('2019' not in dir):
-                # print(os.path.join(root, filename))
                 os.chdir(os.path.join(root, dir))
-                # print(os.path.join(root,dir))
-                # print(dir)
                 filesextract(os.path.join(root, dir))
 
     os.chdir(dirname)
@@ -166,7 +148,8 @@ def users(dirname):
                 with open('statistics_total.csv', 'a', newline='') as csvfile:
                     fieldnames = ['UserID', 'User_Age', 'User_Gender',
                                   'Keystrokes_Mean', 'Happy',
-                                  'Sad', 'Neutral', 'Postponing', 'undefined',
+                                  'Sad', 'Neutral', 'Stressed',
+                                  'Postponing', 'undefined',
                                   'Session_Number']        
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
@@ -180,7 +163,7 @@ def users(dirname):
 # Remove duplicates
 
 # Function for processing DataFrame of typing data
-# Opens 'statistics_user.csv' and saves it to df
+# Opens 'statistics_user.csv' and saves it to DataFrame
 
 
 def process(csvfile):
@@ -198,6 +181,8 @@ def process(csvfile):
         len(df[df['Mood'] == 'Sad TIMEOUT'])
     neutral = len(df[df['Mood'] == 'Neutral']) + \
         len(df[df['Mood'] == 'Neutral TIMEOUT'])
+    stressed = len(df[df['Mood'] == 'Stressed']) + \
+        len(df[df['Mood'] == 'Stressed TIMEOUT'])
     postponing = len(df[df['Mood'] == 'Postponing']) + \
         len(df[df['Mood'] == 'Postponing TIMEOUT'])
     undefined = len(df[df['Mood'] == 'undefined']) + \
@@ -205,11 +190,9 @@ def process(csvfile):
     statistics = {'UserID': userid, 'User_Age': userage,
                   'User_Gender': usergender,
                   'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
-                  'Sad': sad, 'Neutral': neutral, 'Postponing': postponing,
+                  'Sad': sad, 'Neutral': neutral, 'Stressed': stressed,
+                  'Postponing': postponing,
                   'Undefined': undefined, 'Sessions_Number': sessionsnumber}
 
-    # fieldnames = ['UserID', 'User_Age', 'User_Gender',
-    #               'Keystrokes_Mean', 'Happy',
-    #               'Sad', 'Neutral', 'Postponing', 'undefined']
     df = pd.DataFrame.from_dict([statistics])
     return df

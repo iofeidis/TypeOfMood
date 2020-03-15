@@ -335,7 +335,7 @@ def users(dirname):
                     # print(df)
 
                     with open('statistics_total.csv', 'a', newline='') as csvfile:
-                        fieldnames = ['UserID','User_Age', 'User_Gender',
+                        fieldnames = ['UserID', 'User_Age', 'User_Gender',
                                       'Keystrokes_Mean', 'Happy',
                                       'Sad', 'Neutral', 'Postponing', 'undefined',
                                       'Sessions_Number']        

@@ -40,14 +40,11 @@ def emotion(jsonFile):
     with open(jsonFile) as json_file:
         datasession = json.load(json_file)
 
-
     # ?Mood and Physical State?
     # Current Mood
     mood = datasession['currentMood']
-    # print(mood)
     # Current Physical State
     physicalstate = datasession['currentPhysicalState']
-    # print(physicalstate)
 
     stat = {'Mood': mood, 'Physical_State': physicalstate}
 
@@ -72,7 +69,6 @@ def info(jsonFile):
     # UserMedication
     # usermedication = datasession['userMedication']
 
-
     stat = {'UserID': userid, 'User_Age': userage,
             'User_Gender': usergender}
 
@@ -85,15 +81,15 @@ def info(jsonFile):
 
 
 def filesextract(dirname):
-    # os.chdir("d:\\tmp")
     os.chdir(dirname)
 
     # Remove existing .csv files
     for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
-            if filename.endswith('.csv'):
+            if filename.endswith('statistics.csv') or\
+               filename.endswith('statistics_user.csv') or\
+               filename.endswith('emotion.csv'):
                 os.remove(filename)
 
     # Loop across all files and create output.csv and statistics.csv
@@ -114,7 +110,6 @@ def filesextract(dirname):
                     if not file_exists:
                         writer.writeheader()
                     writer.writerow(statistics)
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
             # Session-Keystrokes file 'timestamp.json'
             if (not filename.startswith('Emotion')) and \
@@ -133,15 +128,15 @@ def filesextract(dirname):
                         writer.writeheader()
                     writer.writerow(statistics)
             
-    # Create statistics.csv by merging all .csv in folders below
+    # Create statistics_user.csv by merging all .csv in folders below
     os.chdir(dirname)
+    # Some variables need to be initialized
     flagstat = flagemotion = False
     pathstat = os.path.abspath('/home')
     pathemotion = os.path.abspath('/home/jason')
     for root, dirs, files in os.walk(dirname, topdown=False):
         os.chdir(dirname)
         for filename in files:
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
             if filename.endswith('statistics.csv'):
                 data = pd.read_csv(filename)
@@ -149,21 +144,19 @@ def filesextract(dirname):
                 dfstat = pd.DataFrame(data)
                 pathstat = os.path.abspath(root)
                 flagstat = True
-                # print('pathstat is ' + os.path.join(root, filename))
             elif filename.endswith('emotion.csv'):
                 data = pd.read_csv(filename)
                 fieldnames = ['Mood', 'Physical_State']
                 dfemotion = pd.DataFrame(data)
                 pathemotion = os.path.abspath(root)
                 flagemotion = True
-                # print('pathemotion is ' + os.path.join(root, filename))
+            # 'statistics.csv' and 'emotion.csv' need to be from the
+            # same folder 
             if pathstat == pathemotion and filename.endswith('.csv'):
-                # print('pathstat == pathemotion')
+                # one folder must have both 'emotion.csv' and
+                # 'statistics.csv' to be considered for analysis
                 if flagstat and flagemotion:
-                    # print('flagstat == flagemotion')
-               
                     os.chdir(dirname)
-
                     df = pd.concat([dfstat, dfemotion], axis=1)
                     # Propagation to fill empty emotions
                     df = df.fillna(method='ffill')
@@ -171,41 +164,33 @@ def filesextract(dirname):
                     # Open .csv file and append statistics
                     # Needed for header 
                     file_exists = os.path.isfile('./statistics_user.csv')
-                
                     with open('statistics_user.csv', 'a', newline='') as csvfile:
                         fieldnames = ['Keystrokes', 'Mood', 'Physical_State']
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:
                             writer.writeheader()
-
                     df.to_csv('statistics_user.csv', mode='a', index=False,
                               header=False)
 
                     flagemotion = False
                     flagstat = False
-                    # pathstat = os.path.abspath('/home')
-                    # pathinfo = os.path.abspath('/home/jason')
             elif pathstat != pathemotion and filename.endswith('.csv'):
-                # print('pathstat != pathemotion')
-                # print('pathstat is ' + pathstat)
-                # print('pathemotion is ' + pathemotion)
+                # 'statistics.csv' is first accessed in every folder
                 flagstat = False
-                # flagemotion = False
-        
 
 # Function for looping across all users
 
 
 def users(dirname):
     os.chdir(dirname)
-
-
     # Remove existing .csv files
     for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
-            if filename.endswith('.csv'):
+            if filename.endswith('statistics.csv') or\
+               filename.endswith('statistics_user.csv') or\
+               filename.endswith('emotion.csv') or\
+               filename.endswith('statistics_total.csv'):
                 os.remove(filename)
 
     os.chdir(dirname)
@@ -213,10 +198,7 @@ def users(dirname):
         for dir in dirs:
             # Only user files
             if ('2020' not in dir) and ('2019' not in dir):
-                # print(os.path.join(root, filename))
                 os.chdir(os.path.join(root, dir))
-                # print(os.path.join(root,dir))
-                # print(dir)
                 filesextract(os.path.join(root, dir))
 
     os.chdir(dirname)
@@ -229,17 +211,17 @@ def users(dirname):
             os.chdir(os.path.abspath(root))
             if filename.endswith('user.csv'):
                 dfstat = process(filename)
-                # print(dfstat)
                 pathstat = os.path.abspath(root)
                 flagstat = True
-
             elif filename.endswith('Info.json'):
                 dfinfo = info(filename)
-                # dfinfo = dfinfo.transpose()
                 pathinfo = os.path.abspath(root)
                 flaginfo = True
-
+            # 'statistics_user.csv' and 'Info.json' need to be from the
+            # same folder
             if pathstat == pathinfo:
+                # one folder must have both 'Info.csv' and
+                # 'statistics_user.csv' to be considered for analysis
                 if flagstat and flaginfo:
                     os.chdir(dirname)
                     # Open .csv file and append total statistics
@@ -248,12 +230,11 @@ def users(dirname):
                     df = pd.concat([dfinfo, dfstat], axis=1)
                     # Propagation to fill empty emotions
                     df = df.fillna(method='ffill')
-                    # print(df)
-
                     with open('statistics_total.csv', 'a', newline='') as csvfile:
                         fieldnames = ['UserID', 'User_Age', 'User_Gender',
                                       'Keystrokes_Mean', 'Happy',
-                                      'Sad', 'Neutral', 'Postponing', 'undefined',
+                                      'Sad', 'Neutral', 'Stressed',
+                                      'Postponing', 'undefined',
                                       'Sessions_Number']        
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:
@@ -275,10 +256,6 @@ def process(csvfile):
     data = pd.read_csv(csvfile)
     df = pd.DataFrame(data)
     sessionsnumber = len(df)
-    # kf = df.head(1)
-    # userid = kf.squeeze('rows')['UserID']
-    # userage = kf.squeeze('rows')['User_Age']
-    # usergender = kf.squeeze('rows')['User_Gender']
     keystrokesmean = round(df['Keystrokes'].mean(), 2)
     happy = len(df[df['Mood'] == 'Happy']) + \
         len(df[df['Mood'] == 'Happy TIMEOUT'])
@@ -286,18 +263,16 @@ def process(csvfile):
         len(df[df['Mood'] == 'Sad TIMEOUT'])
     neutral = len(df[df['Mood'] == 'Neutral']) + \
         len(df[df['Mood'] == 'Neutral TIMEOUT'])
+    stressed = len(df[df['Mood'] == 'Stressed']) + \
+        len(df[df['Mood'] == 'Stressed TIMEOUT'])
     postponing = len(df[df['Mood'] == 'Postponing']) + \
         len(df[df['Mood'] == 'Postponing TIMEOUT'])
     undefined = len(df[df['Mood'] == 'undefined']) + \
         len(df[df['Mood'] == 'undefined TIMEOUT'])        
     statistics = {'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
-                  'Sad': sad, 'Neutral': neutral, 'Postponing': postponing,
+                  'Sad': sad, 'Neutral': neutral, 'Stressed': stressed,
+                  'Postponing': postponing,
                   'Undefined': undefined, 'Sessions_Number': sessionsnumber}
 
-    # fieldnames = ['Keystrokes_Mean', 'Happy',\
-    #              'Sad', 'Neutral', 'Postponing', 'undefined',
-    #             'Sessions_Number']
     df = pd.DataFrame.from_dict([statistics])
     return df
-
-
