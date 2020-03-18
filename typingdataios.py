@@ -18,6 +18,7 @@
 #     1) Hold Time 
 #     2) Flight Time 
 #     3) Pressure (No Values?)
+#     Probably will not use these ones: 
 #     4) Accelerometer Magnitude
 #     5) Accelerometer Angle
 #     6) Gyroscope Magnitude
@@ -61,40 +62,52 @@ def keystrokes(jsonFile):
 
     # #ht: HoldTime, ft: FlightTime
     # #am: AccelerometerMagnitude, aa: AccelerometerAngle,
-    # #gm: GyroscopeMagnitude, pv: Pressure Values
-    # ht = []
-    # ft = []
+    # #gm: GyroscopeMagnitude, pv: Pressure Values (Normalized)
+    ht = []
+    ft = []
+    sp = []
+    pfr = []
     # am = []
     # aa = []
     # gm = []
-    # pv = []
+    pv = []
 
-    # length = datasession['sumOfCharacters']
-
-    # for p in range(length):
-    #     if p<length-1:
-    #         #FlightTime < 0 are omitted from the sequences
-    #         #HoldTime > 300 are excluded from the sequences
-    #         # map function
-    #         if ((datadown[p+1] - dataup[p]) > 0) and (islongpress[p]== 0):
-    #             ft.append(datadown[p+1] - dataup[p])
-    #             ht.append(dataup[p] - datadown[p])
-    #             pv.append(pressure[p])
-    #     else: break
-
+    length = datasession['sumOfCharacters']
+    for p in range(length - 1):
+        # 0 < flight time < 3000 ms (3 sec)
+        # 0 < hold time < 300 ms (0.3 sec)
+        tempft = datadown[p + 1] - dataup[p]
+        tempht = dataup[p] - datadown[p]
+        if tempft > 0 and tempft < 3000 and\
+           tempht > 0 and tempht < 300 and\
+           (not islongpress[p]):
+            ft.append(tempft)
+            ht.append(tempht)
+            if p < len(pressure):
+                pv.append(pressure[p])
+    
+    # Pressure Values Issue
+    if not pv:
+        pv.append(0)
+    
     # Total Number of Characters
     # ?is length(ht) == sumOfCharacters?
-    # length = len(ht)
+    lengthht = len(ht)
+    lengthft = len(ft)
+    lengthdis = len(distance)
+    minlength = min(lengthht, lengthft, lengthdis)
 
-    # for p in range(length-1):
-    #     sp.append(distance[p]/ft[p])
-    #     pfr.append(ht[p]/ft[p])
+    for p in range(minlength - 1):
+        sp.append(distance[p] / ft[p])
+        pfr.append(ht[p] / ft[p])
     
     # dr: Delete Rate
-    # dr = (datasession['NumDels'])/length
-
-    # Duration of Session (in msec)
-    # duration = datasession['StopDateTime']-datasession['StartDateTime']
+    if length > 0:
+        dr = (datasession['backSpaceCounter']) / length
+    else:
+        dr = 0
+    # Duration of Session (in sec)
+    duration = datasession['sessionTime']
 
     # length = len(rawValues['accelerometerX'])
 
@@ -116,17 +129,64 @@ def keystrokes(jsonFile):
     #             rawValues['gyroscopeY'],rawValues['gyroscopeZ']])
     #         gm.append(np.linarg.norm(x))
     #     else: break
+
+
+    # Convert data lists to Panda.Series
+    htseries = pd.Series(ht)
+    ftseries = pd.Series(ft)
+    spseries = pd.Series(sp)
+    pfrseries = pd.Series(pfr)
+    pvseries = pd.Series(pv)
+
+    # Is not used in analysis
+    # Mean of each Series
+    htmean = htseries.mean()
+    ftmean = ftseries.mean()
+    spmean = spseries.mean()
+    pfrmean = pfrseries.mean()
+    pvmean = pvseries.mean()
+
+    # Median of each Series
+    htmedian = htseries.median()
+    ftmedian = ftseries.median()
+    spmedian = spseries.median()
+    pfrmedian = pfrseries.median()
+    pvmedian = pvseries.median()
+
+    # Standard Deviation of each Series
+    htstd = htseries.std()
+    ftstd = ftseries.std()
+    spstd = spseries.std()
+    pfrstd = pfrseries.std()
+    pvstd = pvseries.std()
+
+    # Skewness of each Series
+    htskew = htseries.skew()
+    ftskew = ftseries.skew()
+    spskew = spseries.skew()
+    pfrskew = pfrseries.skew()
+    pvskew = pvseries.skew()
+
+    # Kurtosis of each Series
+    htkurtosis = htseries.kurtosis()
+    ftkurtosis = ftseries.kurtosis()
+    spkurtosis = spseries.kurtosis()
+    pfrkurtosis = pfrseries.kurtosis()
+    pvkurtosis = pvseries.kurtosis()
+
     
-    # dr: Delete Rate
-    # dr = (datasession['NumDels'])/length
-
-    # Length of Characters
-    keystrokes = datasession['sumOfCharacters']
-
-    # Duration
-    # duration = datasession['keyboardDownTime'] - datasession['keyboardDownTime'] 
-
-    stat = {'Keystrokes': keystrokes}
+    stat = {'HT_Mean': htmean, 'HT_Median': htmedian, 'HT_STD': htstd,
+            'HT_Skewness': htskew, 'HT_Kurtosis': htkurtosis,
+            'FT_Mean': ftmean, 'FT_Median': ftmedian, 'FT_STD': ftstd,
+            'FT_Skewness': ftskew, 'FT_Kurtosis': ftkurtosis,
+            'SP_Mean': spmean, 'SP_Median': spmedian, 'SP_STD': spstd,
+            'SP_Skewness': spskew, 'SP_Kurtosis': spkurtosis,
+            'PFR_Mean': pfrmean, 'PFR_Median': pfrmedian, 'PFR_STD': pfrstd,
+            'PFR_Skewness': pfrskew, 'PFR_Kurtosis': pfrkurtosis,
+            'PV_Mean': pvmean, 'PV_Median': pvmedian, 'PV_STD': pvstd,
+            'PV_Skewness': pvskew, 'PV_Kurtosis': pvkurtosis,
+            'Duration': duration,
+            'Delete_Rate': dr, 'Length': length}
 
     return stat
 
@@ -136,14 +196,11 @@ def emotion(jsonFile):
     with open(jsonFile) as json_file:
         datasession = json.load(json_file)
 
-
     # ?Mood and Physical State?
     # Current Mood
     mood = datasession['currentMood']
-    # print(mood)
     # Current Physical State
     physicalstate = datasession['currentPhysicalState']
-    # print(physicalstate)
 
     stat = {'Mood': mood, 'Physical_State': physicalstate}
 
@@ -168,7 +225,6 @@ def info(jsonFile):
     # UserMedication
     # usermedication = datasession['userMedication']
 
-
     stat = {'UserID': userid, 'User_Age': userage,
             'User_Gender': usergender}
 
@@ -181,18 +237,18 @@ def info(jsonFile):
 
 
 def filesextract(dirname):
-    # os.chdir("d:\\tmp")
     os.chdir(dirname)
 
     # Remove existing .csv files
     for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
-            if filename.endswith('.csv'):
+            if filename.endswith('output.csv') or\
+               filename.endswith('output_user.csv') or\
+               filename.endswith('emotion.csv'):
                 os.remove(filename)
 
-    # Loop across all files and create output.csv and statistics.csv
+    # Loop across all files and create output.csv and output.csv
     # containing typingdata of all sessions in a day                
     os.chdir(os.path.abspath(dirname))
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
@@ -210,7 +266,6 @@ def filesextract(dirname):
                     if not file_exists:
                         writer.writeheader()
                     writer.writerow(statistics)
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
             # Session-Keystrokes file 'timestamp.json'
             if (not filename.startswith('Emotion')) and \
@@ -220,26 +275,36 @@ def filesextract(dirname):
                 statistics = keystrokes(filename)
 
                 # Open .csv file and append statistics 
-                file_exists = os.path.isfile('./statistics.csv')
+                file_exists = os.path.isfile('./output.csv')
                 
-                with open('statistics.csv', 'a', newline='') as csvfile:
+                with open('output.csv', 'a', newline='') as csvfile:
                     fieldnames = statistics.keys()        
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
                     writer.writerow(statistics)
             
-    # Create statistics.csv by merging all .csv in folders below
+    # Create output_user.csv by merging all .csv in folders below
     os.chdir(dirname)
+    # Some variables need to be initialized
     flagstat = flagemotion = False
+    pathstat = os.path.abspath('/home')
+    pathemotion = os.path.abspath('/home/jason')
     for root, dirs, files in os.walk(dirname, topdown=False):
         os.chdir(dirname)
         for filename in files:
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics.csv'):
+            if filename.endswith('output.csv'):
                 data = pd.read_csv(filename)
-                fieldnames = ['Keystrokes']
+                fieldnames = ['HT_Mean', 'HT_Median', 'HT_STD', 'HT_Skewness',
+                              'HT_Kurtosis', 'FT_Mean', 'FT_Median', 'FT_STD',
+                              'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
+                              'SP_Median', 'SP_STD', 'SP_Skewness',
+                              'SP_Kurtosis', 'PFR_Mean', 'PFR_Median',
+                              'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
+                              'PV_Mean', 'PV_Median', 'PV_STD', 'PV_Skewness',
+                              'PV_Kurtosis',
+                              'Duration', 'Delete_Rate', 'Length']
                 dfstat = pd.DataFrame(data)
                 pathstat = os.path.abspath(root)
                 flagstat = True
@@ -249,58 +314,65 @@ def filesextract(dirname):
                 dfemotion = pd.DataFrame(data)
                 pathemotion = os.path.abspath(root)
                 flagemotion = True
-            if flagstat and flagemotion\
-               and pathstat == pathemotion:
-                os.chdir(dirname)
+            # 'output.csv' and 'emotion.csv' need to be from the
+            # same folder 
+            if pathstat == pathemotion and filename.endswith('.csv'):
+                # one folder must have both 'emotion.csv' and
+                # 'output.csv' to be considered for analysis
+                if flagstat and flagemotion:
+                    os.chdir(dirname)
+                    df = pd.concat([dfstat, dfemotion], axis=1)
+                    # Propagation to fill empty emotions
+                    df = df.fillna(method='ffill')
 
-                df = pd.concat([dfstat, dfemotion], axis=1)
-                # Propagation to fill empty emotions
-                df = df.fillna(method='ffill')
+                    # Open .csv file and append statistics
+                    # Needed for header 
+                    file_exists = os.path.isfile('./output_user.csv')
+                    with open('output_user.csv', 'a', newline='') as csvfile:
+                        fieldnames = ['HT_Mean', 'HT_Median', 'HT_STD',
+                                      'HT_Skewness', 'HT_Kurtosis', 'FT_Mean',
+                                      'FT_Median', 'FT_STD',
+                                      'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
+                                      'SP_Median', 'SP_STD', 'SP_Skewness',
+                                      'SP_Kurtosis', 'PFR_Mean', 'PFR_Median',
+                                      'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
+                                      'PV_Mean', 'PV_Median', 'PV_STD',
+                                      'PV_Skewness', 'PV_Kurtosis',
+                                      'Duration', 'Delete_Rate', 'Length',
+                                      'Mood', 'Physical_State']
+                        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                        if not file_exists:
+                            writer.writeheader()
+                    df.to_csv('output_user.csv', mode='a', index=False,
+                              header=False)
 
-                # Open .csv file and append statistics
-                # Needed for header 
-                file_exists = os.path.isfile('./statistics_user.csv')
-            
-                with open('statistics_user.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['Keystrokes', 'Mood', 'Physical_State']
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                    if not file_exists:
-                        writer.writeheader()
-
-                df.to_csv('statistics_user.csv', mode='a', index=False,
-                          header=False)
-
-                flagemotion = False
+                    flagemotion = False
+                    flagstat = False
+            elif pathstat != pathemotion and filename.endswith('.csv'):
+                # 'output.csv' is first accessed in every folder
                 flagstat = False
-            elif flagstat and flagemotion and\
-                    pathstat != pathemotion:
-                flagstat = False
-                flaginfo = False
-        
 
 # Function for looping across all users
 
 
 def users(dirname):
     os.chdir(dirname)
-
-
     # Remove existing .csv files
     for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
-            # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
-            if filename.endswith('.csv'):
+            if filename.endswith('output.csv') or\
+               filename.endswith('output_user.csv') or\
+               filename.endswith('emotion.csv') or\
+               filename.endswith('output_total.csv'):
                 os.remove(filename)
 
     os.chdir(dirname)
     for root, dirs, files in os.walk(dirname, topdown=False):
         for dir in dirs:
+            # Only user files
             if ('2020' not in dir) and ('2019' not in dir):
-                # print(os.path.join(root, filename))
                 os.chdir(os.path.join(root, dir))
-                # print(os.path.join(root,dir))
-                # print(dir)
                 filesextract(os.path.join(root, dir))
 
     os.chdir(dirname)
@@ -311,78 +383,69 @@ def users(dirname):
     for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
             os.chdir(os.path.abspath(root))
-            if filename.endswith('user.csv'):
+            if filename.endswith('output_user.csv'):
                 dfstat = process(filename)
-                # print(dfstat)
                 pathstat = os.path.abspath(root)
                 flagstat = True
-
             elif filename.endswith('Info.json'):
                 dfinfo = info(filename)
-                # dfinfo = dfinfo.transpose()
                 pathinfo = os.path.abspath(root)
                 flaginfo = True
-
+            # 'output_user.csv' and 'Info.json' need to be from the
+            # same folder
             if pathstat == pathinfo:
+                # one folder must have both 'Info.csv' and
+                # 'output_user.csv' to be considered for analysis
                 if flagstat and flaginfo:
                     os.chdir(dirname)
                     # Open .csv file and append total statistics
                     # Needed for header 
-                    file_exists = os.path.isfile('./statistics_total.csv')
+                    file_exists = os.path.isfile('./output_total.csv')
                     df = pd.concat([dfinfo, dfstat], axis=1)
                     # Propagation to fill empty emotions
                     df = df.fillna(method='ffill')
-                    # print(df)
-
-                    with open('statistics_total.csv', 'a', newline='') as csvfile:
+                    with open('output_total.csv', 'a', newline='') as csvfile:
                         fieldnames = ['UserID', 'User_Age', 'User_Gender',
-                                      'Keystrokes_Mean', 'Happy',
-                                      'Sad', 'Neutral', 'Postponing', 'undefined',
-                                      'Sessions_Number']        
+                                      'HT_Mean', 'HT_Median', 'HT_STD',
+                                      'HT_Skewness',
+                                      'HT_Kurtosis', 'FT_Mean', 'FT_Median',
+                                      'FT_STD',
+                                      'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
+                                      'SP_Median', 'SP_STD', 'SP_Skewness',
+                                      'SP_Kurtosis', 'PFR_Mean', 'PFR_Median',
+                                      'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
+                                      'PV_Mean', 'PV_Median', 'PV_STD',
+                                      'PV_Skewness',
+                                      'PV_Kurtosis',
+                                      'Duration', 'Delete_Rate', 'Length',
+                                      'Mood', 'Physical_State']        
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:
                             writer.writeheader()
 
-                    df.to_csv('statistics_total.csv', mode='a', index=False,
+                    df.to_csv('output_total.csv', mode='a', index=False,
                               header=False)
 
                     flagstat = False
-                    flaginfo = False
-                    pathstat = pathinfo = os.path.abspath(dirname)
-            elif pathstat != pathinfo: 
+                    flaginfo = False    
+            elif pathstat != pathinfo:
                 # info.json is first accessed in every folder
-                flaginfo = False
-            
+                # flaginfo = False
+                flagstat = False
+
 # Function for processing DataFrame of typing data
 
 
 def process(csvfile):
     data = pd.read_csv(csvfile)
     df = pd.DataFrame(data)
-    sessionsnumber = len(df)
-    # kf = df.head(1)
-    # userid = kf.squeeze('rows')['UserID']
-    # userage = kf.squeeze('rows')['User_Age']
-    # usergender = kf.squeeze('rows')['User_Gender']
-    keystrokesmean = round(df['Keystrokes'].mean(), 2)
-    happy = len(df[df['Mood'] == 'Happy']) + \
-        len(df[df['Mood'] == 'Happy TIMEOUT'])
-    sad = len(df[df['Mood'] == 'Sad']) + \
-        len(df[df['Mood'] == 'Sad TIMEOUT'])
-    neutral = len(df[df['Mood'] == 'Neutral']) + \
-        len(df[df['Mood'] == 'Neutral TIMEOUT'])
-    postponing = len(df[df['Mood'] == 'Postponing']) + \
-        len(df[df['Mood'] == 'Postponing TIMEOUT'])
-    undefined = len(df[df['Mood'] == 'undefined']) + \
-        len(df[df['Mood'] == 'undefined TIMEOUT'])        
-    statistics = {'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
-                  'Sad': sad, 'Neutral': neutral, 'Postponing': postponing,
-                  'Undefined': undefined, 'Sessions_Number': sessionsnumber}
-
-    # fieldnames = ['Keystrokes_Mean', 'Happy',\
-    #              'Sad', 'Neutral', 'Postponing', 'undefined',
-    #             'Sessions_Number']
-    df = pd.DataFrame.from_dict([statistics])
+    # Keep only sessions with NumberOfCharacters > 5
+    df = df[df['Length'] > 5].reset_index(drop=True)
+    # Keep only sessions with label (mood != undefined)
+    df = df[df['Mood'] != 'undefined'].reset_index(drop=True)
+    df = df.round(4)
+    # Keep only users with number of sessions > 10
+    if len(df) < 10:
+        df = pd.DataFrame(columns=df.columns)
+    # print(df)
     return df
-
-

@@ -36,6 +36,7 @@ def extract(jsonFile):
     # Current Physical State
     physicalstate = datasession['CurrentPhysicalState']
     # print(mood)
+
     # DownTime
     datadown = (datasession['DownTime'])
     # Uptime
@@ -50,10 +51,10 @@ def extract(jsonFile):
 
     # UserID
     userid = data['USER_ID']
-    # UserAge
-    userage = data['USER_AGE']
-    # UserGender
-    usergender = data['USER_GENDER']
+    # # UserAge
+    # userage = data['USER_AGE']
+    # # UserGender
+    # usergender = data['USER_GENDER']
 
     # ht: HoldTime, ft: FlightTime
     # sp: Speed, pfr: Press-Flight-Rate
@@ -84,26 +85,31 @@ def extract(jsonFile):
     #     5) Duration
     #     6) Length
     #     7) Delete Rate
-    for p in range(length):
-        if p < length - 1:
-            # FlightTime < 0 are omitted from the sequences
-            # HoldTime > 300 are excluded from the sequences
-            if ((datadown[p + 1] - dataup[p]) > 0) and (islongpress[p] == 0):
-                ft.append(datadown[p + 1] - dataup[p])
-                ht.append(dataup[p] - datadown[p])
-                # pv.append(pressure[p])
-        else:
-            break
 
+    for p in range(length - 1):
+        # 0 < flight time < 3000 ms (3 sec)
+        # 0 < hold time < 300 ms (0.3 sec)
+        tempft = datadown[p + 1] - dataup[p]
+        tempht = dataup[p] - datadown[p]
+        if tempft > 0 and tempft < 3000 and\
+           tempht > 0 and tempht < 300 and\
+           (islongpress[p] == 0):
+            ft.append(tempft)
+            ht.append(tempht)
+            # pv.append(pressure[p])
+        
     # Total Number of Characters
     length = len(ht)
 
     for p in range(length - 1):
         sp.append(distance[p] / ft[p])
         pfr.append(ht[p] / ft[p])
+        
     # dr: Delete Rate
-    dr = (datasession['NumDels']) / length
-
+    if length > 0:
+        dr = (datasession['NumDels']) / length
+    else:
+        dr = 0
     # Duration of Session (in msec)
     duration = datasession['StopDateTime'] - datasession['StartDateTime']
 
@@ -156,7 +162,8 @@ def extract(jsonFile):
     # print(htskew)
     # print(htkurtosis)
     # Insert Characteristics into Variables Dictionary
-    variables = {'HT_Mean': htmean, 'HT_Median': htmedian, 'HT_STD': htstd,
+    variables = {'UserID': userid,
+                 'HT_Mean': htmean, 'HT_Median': htmedian, 'HT_STD': htstd,
                  'HT_Skewness': htskew, 'HT_Kurtosis': htkurtosis,
                  'FT_Mean': ftmean, 'FT_Median': ftmedian, 'FT_STD': ftstd,
                  'FT_Skewness': ftskew, 'FT_Kurtosis': ftkurtosis,
@@ -170,13 +177,6 @@ def extract(jsonFile):
                  'Delete_Rate': dr, 'Length': length,
                  'Mood': mood, 'Physical_State': physicalstate}
 
-    # Insert session statistics into Statistics Dictionary
-    statistics = {'UserID': userid, 'User_Age': userage,
-                  'User_Gender': usergender, 'Keystrokes': length,
-                  'Mood': mood, 'Physical_State': physicalstate}
-
-    # distance = df.loc['Distance'][0]
-
     # Open .csv file and append variables
     file_exists = os.path.isfile('./output.csv')
 
@@ -186,15 +186,6 @@ def extract(jsonFile):
         if not file_exists:
             writer.writeheader()
         writer.writerow(variables)
-
-    # Open .csv file and append statistics
-    file_exists = os.path.isfile('./statistics.csv')
-    with open('statistics.csv', 'a', newline='') as csvfile:
-        fieldnames = statistics.keys()
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        if not file_exists:
-            writer.writeheader()
-        writer.writerow(statistics)
 
     return
 
@@ -210,10 +201,12 @@ def filesextract(dirname):
         for filename in files:
             # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
-            if filename.endswith('.csv'):
+            if filename.endswith('output.csv') or \
+               filename.endswith('output_user.csv'):
                 os.remove(filename)
 
-    # Loop across all files and create output.csv and statistics.csv
+
+    # Loop across all files and create output.csv and output.csv
     # containing typingdata of all sessions in a day
     os.chdir(dirname)
     for root, dirs, files in os.walk(dirname, topdown=False):
@@ -224,34 +217,41 @@ def filesextract(dirname):
                 # print(filename)
                 extract(filename)
 
-    # Create statistics.csv by merging all .csv in folders below
+    # Create output.csv by merging all .csv in folders below
     os.chdir(dirname)
     for root, dirs, files in os.walk(dirname, topdown=False):
         os.chdir(dirname)
         for filename in files:
             # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics.csv'):
+            if filename.endswith('output.csv'):
                 data = pd.read_csv(filename)
-                fieldnames = ['UserID', 'User_Age', 'User_Gender',
-                              'Keystrokes', 'Mood', 'Physical_State']
                 df = pd.DataFrame(data)
-                # print(statistics)
+                # print(output)
                 os.chdir(dirname)
 
                 # os.chdir(os.path.join(root,dir))
                 os.chdir(dirname)
-                # Open .csv file and append statistics
+                # Open .csv file and append output
                 # Needed for header
-                file_exists = os.path.isfile('./statistics_user.csv')
-                with open('statistics_user.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['UserID', 'User_Age', 'User_Gender',
-                                  'Keystrokes', 'Mood', 'Physical_State']
+                file_exists = os.path.isfile('./output_user.csv')
+                with open('output_user.csv', 'a', newline='') as csvfile:
+                    fieldnames = ['UserID',
+                                  'HT_Mean', 'HT_Median', 'HT_STD', 'HT_Skewness',
+                                  'HT_Kurtosis', 'FT_Mean', 'FT_Median', 'FT_STD',
+                                  'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
+                                  'SP_Median', 'SP_STD', 'SP_Skewness',
+                                  'SP_Kurtosis', 'PFR_Mean', 'PFR_Median',
+                                  'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
+                                  # 'PV_Mean', 'PV_Median', 'PV_STD', 'PV_Skewness',
+                                  # 'PV_Kurtosis',
+                                  'Duration', 'Delete_Rate', 'Length',
+                                  'Mood', 'Physical_State']
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
 
-                df.to_csv('statistics_user.csv', mode='a', index=False,
+                df.to_csv('output_user.csv', mode='a', index=False,
                           header=False)
     return
 
@@ -266,7 +266,9 @@ def users(dirname):
         for filename in files:
             # print(os.path.join(root, filename))
             os.chdir(os.path.abspath(root))
-            if filename.endswith('.csv'):
+            if filename.endswith('output.csv') or\
+               filename.endswith('output_user.csv') or\
+               filename.endswith('output_total.csv'):
                 os.remove(filename)
 
     os.chdir(dirname)
@@ -283,22 +285,29 @@ def users(dirname):
     for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
             os.chdir(os.path.abspath(root))
-            if filename.endswith('user.csv'):
+            if filename.endswith('output_user.csv'):
                 df = process(filename)
                 os.chdir(dirname)
-                # Open .csv file and append total statistics
+                # Open .csv file and append total output
                 # Needed for header
-                file_exists = os.path.isfile('./statistics_total.csv')            
-                with open('statistics_total.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['UserID', 'User_Age', 'User_Gender',
-                                  'Keystrokes_Mean', 'Happy',
-                                  'Sad', 'Neutral', 'Postponing', 'undefined',
-                                  'Session_Number']        
+                file_exists = os.path.isfile('./output_total.csv')            
+                with open('output_total.csv', 'a', newline='') as csvfile:
+                    fieldnames = ['UserID',
+                                  'HT_Mean', 'HT_Median', 'HT_STD', 'HT_Skewness',
+                                  'HT_Kurtosis', 'FT_Mean', 'FT_Median', 'FT_STD',
+                                  'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
+                                  'SP_Median', 'SP_STD', 'SP_Skewness',
+                                  'SP_Kurtosis', 'PFR_Mean', 'PFR_Median',
+                                  'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
+                                  # 'PV_Mean', 'PV_Median', 'PV_STD', 'PV_Skewness',
+                                  # 'PV_Kurtosis',
+                                  'Duration', 'Delete_Rate', 'Length',
+                                  'Mood', 'Physical_State']        
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
 
-                df.to_csv('statistics_total.csv', mode='a', index=False,
+                df.to_csv('output_total.csv', mode='a', index=False,
                           header=False)
     return
 
@@ -306,36 +315,18 @@ def users(dirname):
 # Remove duplicates
 
 # Function for processing DataFrame of typing data
-# Opens 'statistics_user.csv' and saves it to df
+# Opens 'output_user.csv' and saves it to df
 
 
 def process(csvfile):
     data = pd.read_csv(csvfile)
     df = pd.DataFrame(data)
-    kf = df.head(1)
-    sessionsnumber = len(df)
-    userid = kf.squeeze('rows')['UserID']
-    userage = kf.squeeze('rows')['User_Age']
-    usergender = kf.squeeze('rows')['User_Gender']
-    keystrokesmean = round(df['Keystrokes'].mean(), 2)
-    happy = len(df[df['Mood'] == 'Happy']) + \
-        len(df[df['Mood'] == 'Happy TIMEOUT'])
-    sad = len(df[df['Mood'] == 'Sad']) + \
-        len(df[df['Mood'] == 'Sad TIMEOUT'])
-    neutral = len(df[df['Mood'] == 'Neutral']) + \
-        len(df[df['Mood'] == 'Neutral TIMEOUT'])
-    postponing = len(df[df['Mood'] == 'Postponing']) + \
-        len(df[df['Mood'] == 'Postponing TIMEOUT'])
-    undefined = len(df[df['Mood'] == 'undefined']) + \
-        len(df[df['Mood'] == 'undefined TIMEOUT'])            
-    statistics = {'UserID': userid, 'User_Age': userage,
-                  'User_Gender': usergender,
-                  'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
-                  'Sad': sad, 'Neutral': neutral, 'Postponing': postponing,
-                  'Undefined': undefined, 'Sessions_Number': sessionsnumber}
-
-    # fieldnames = ['UserID', 'User_Age', 'User_Gender',
-    #               'Keystrokes_Mean', 'Happy',
-    #               'Sad', 'Neutral', 'Postponing', 'undefined']
-    df = pd.DataFrame.from_dict([statistics])
+    # Keep only sessions with NumberOfCharacters > 5
+    df = df[df['Length'] > 5].reset_index(drop=True)
+    # Keep only sessios with label (mood != undefined)
+    df = df[df['Mood'] != 'undefined'].reset_index(drop=True)
+    df = df.round(4)
+    # Keep only users with number of sessions > 10
+    if len(df) < 10:
+        df = pd.DataFrame(columns=df.columns)
     return df

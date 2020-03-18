@@ -209,7 +209,7 @@ def users(dirname):
     for root, dirs, files in os.walk(dirname, topdown=False):
         for filename in files:
             os.chdir(os.path.abspath(root))
-            if filename.endswith('user.csv'):
+            if filename.endswith('statistics_user.csv'):
                 dfstat = process(filename)
                 pathstat = os.path.abspath(root)
                 flagstat = True
