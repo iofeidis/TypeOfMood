@@ -55,6 +55,8 @@ def extract(jsonFile):
     # userage = data['USER_AGE']
     # # UserGender
     # usergender = data['USER_GENDER']
+    # UserPhq9
+    userphq9 = data['USER_PHQ9']
 
     # ht: HoldTime, ft: FlightTime
     # sp: Speed, pfr: Press-Flight-Rate
@@ -111,7 +113,7 @@ def extract(jsonFile):
     else:
         dr = 0
     # Duration of Session (in msec)
-    duration = datasession['StopDateTime'] - datasession['StartDateTime']
+    # duration = datasession['StopDateTime'] - datasession['StartDateTime']
 
     # Convert data lists to Panda.Series
     htseries = pd.Series(ht)
@@ -162,7 +164,7 @@ def extract(jsonFile):
     # print(htskew)
     # print(htkurtosis)
     # Insert Characteristics into Variables Dictionary
-    variables = {'UserID': userid,
+    variables = {'UserID': userid, 'User_PHQ9': userphq9,
                  'HT_Mean': htmean, 'HT_Median': htmedian, 'HT_STD': htstd,
                  'HT_Skewness': htskew, 'HT_Kurtosis': htkurtosis,
                  'FT_Mean': ftmean, 'FT_Median': ftmedian, 'FT_STD': ftstd,
@@ -173,8 +175,9 @@ def extract(jsonFile):
                  'PFR_Skewness': pfrskew, 'PFR_Kurtosis': pfrkurtosis,
                  # 'PV_Mean': pvmean, 'PV_Median': pvmedian, 'PV_STD': pvstd,
                  # 'PV_Skewness': pvskew, 'PV_Kurtosis': pvkurtosis,
-                 'Duration': duration,
-                 'Delete_Rate': dr, 'Length': length,
+                 # 'Duration': duration,
+                 'Delete_Rate': dr,
+                 'Length': length,
                  'Mood': mood, 'Physical_State': physicalstate}
 
     # Open .csv file and append variables
@@ -236,7 +239,7 @@ def filesextract(dirname):
                 # Needed for header
                 file_exists = os.path.isfile('./output_user.csv')
                 with open('output_user.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['UserID',
+                    fieldnames = ['UserID', 'User_PHQ9', 
                                   'HT_Mean', 'HT_Median', 'HT_STD', 'HT_Skewness',
                                   'HT_Kurtosis', 'FT_Mean', 'FT_Median', 'FT_STD',
                                   'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
@@ -245,7 +248,9 @@ def filesextract(dirname):
                                   'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
                                   # 'PV_Mean', 'PV_Median', 'PV_STD', 'PV_Skewness',
                                   # 'PV_Kurtosis',
-                                  'Duration', 'Delete_Rate', 'Length',
+                                  # 'Duration',
+                                  'Delete_Rate',
+                                  'Length',
                                   'Mood', 'Physical_State']
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
@@ -292,7 +297,7 @@ def users(dirname):
                 # Needed for header
                 file_exists = os.path.isfile('./output_total.csv')            
                 with open('output_total.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['UserID',
+                    fieldnames = ['UserID', 'User_PHQ9', 
                                   'HT_Mean', 'HT_Median', 'HT_STD', 'HT_Skewness',
                                   'HT_Kurtosis', 'FT_Mean', 'FT_Median', 'FT_STD',
                                   'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
@@ -301,7 +306,9 @@ def users(dirname):
                                   'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
                                   # 'PV_Mean', 'PV_Median', 'PV_STD', 'PV_Skewness',
                                   # 'PV_Kurtosis',
-                                  'Duration', 'Delete_Rate', 'Length',
+                                  # 'Duration',
+                                  'Delete_Rate',
+                                  'Length',
                                   'Mood', 'Physical_State']        
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
@@ -324,7 +331,11 @@ def process(csvfile):
     # Keep only sessions with NumberOfCharacters > 5
     df = df[df['Length'] > 5].reset_index(drop=True)
     # Keep only sessios with label (mood != undefined)
-    df = df[df['Mood'] != 'undefined'].reset_index(drop=True)
+    # and (mood != Postponing)
+    df = df[(df['Mood'] != 'undefined') & 
+            (df['Mood'] != 'undefined TIMEOUT') &
+            (df['Mood'] != 'Postponing') & 
+            (df['Mood'] != 'Postponing TIMEOUT')].reset_index(drop=True)
     df = df.round(4)
     # Keep only users with number of sessions > 10
     if len(df) < 10:

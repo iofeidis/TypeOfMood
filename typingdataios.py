@@ -107,7 +107,7 @@ def keystrokes(jsonFile):
     else:
         dr = 0
     # Duration of Session (in sec)
-    duration = datasession['sessionTime']
+    # duration = datasession['sessionTime']
 
     # length = len(rawValues['accelerometerX'])
 
@@ -185,7 +185,7 @@ def keystrokes(jsonFile):
             'PFR_Skewness': pfrskew, 'PFR_Kurtosis': pfrkurtosis,
             'PV_Mean': pvmean, 'PV_Median': pvmedian, 'PV_STD': pvstd,
             'PV_Skewness': pvskew, 'PV_Kurtosis': pvkurtosis,
-            'Duration': duration,
+            # 'Duration': duration,
             'Delete_Rate': dr, 'Length': length}
 
     return stat
@@ -215,18 +215,19 @@ def info(jsonFile):
     # UserID
     userid = datasession['userDeviceID']
     # UserAge
-    userage = datasession['userAge']
+    # userage = datasession['userAge']
     # UserGender
-    usergender = datasession['userGender']
+    # usergender = datasession['userGender']
     # UserPHQ9
-    # userphq9 = datasession['userPhq9Score']
+    userphq9 = datasession['userPhq9Score']
     # UserDeficiency
     # userdeficiency = datasession['userDeficiency']
     # UserMedication
     # usermedication = datasession['userMedication']
 
-    stat = {'UserID': userid, 'User_Age': userage,
-            'User_Gender': usergender}
+    stat = {'UserID': userid,
+            # 'User_Age': userage, 'User_Gender': usergender,
+            'User_PHQ9': userphq9}
 
     # df = pd.read_json(jsonFile, orient = 'index')
     df = pd.DataFrame.from_dict([stat])
@@ -304,7 +305,8 @@ def filesextract(dirname):
                               'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
                               'PV_Mean', 'PV_Median', 'PV_STD', 'PV_Skewness',
                               'PV_Kurtosis',
-                              'Duration', 'Delete_Rate', 'Length']
+                              # 'Duration',
+                              'Delete_Rate', 'Length']
                 dfstat = pd.DataFrame(data)
                 pathstat = os.path.abspath(root)
                 flagstat = True
@@ -338,7 +340,8 @@ def filesextract(dirname):
                                       'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
                                       'PV_Mean', 'PV_Median', 'PV_STD',
                                       'PV_Skewness', 'PV_Kurtosis',
-                                      'Duration', 'Delete_Rate', 'Length',
+                                      # 'Duration',
+                                      'Delete_Rate', 'Length',
                                       'Mood', 'Physical_State']
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:
@@ -405,7 +408,8 @@ def users(dirname):
                     # Propagation to fill empty emotions
                     df = df.fillna(method='ffill')
                     with open('output_total.csv', 'a', newline='') as csvfile:
-                        fieldnames = ['UserID', 'User_Age', 'User_Gender',
+                        fieldnames = ['UserID', 'User_PHQ9',
+                                      # 'User_Age', 'User_Gender',
                                       'HT_Mean', 'HT_Median', 'HT_STD',
                                       'HT_Skewness',
                                       'HT_Kurtosis', 'FT_Mean', 'FT_Median',
@@ -417,7 +421,8 @@ def users(dirname):
                                       'PV_Mean', 'PV_Median', 'PV_STD',
                                       'PV_Skewness',
                                       'PV_Kurtosis',
-                                      'Duration', 'Delete_Rate', 'Length',
+                                      # 'Duration',
+                                      'Delete_Rate', 'Length',
                                       'Mood', 'Physical_State']        
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:
@@ -442,7 +447,8 @@ def process(csvfile):
     # Keep only sessions with NumberOfCharacters > 5
     df = df[df['Length'] > 5].reset_index(drop=True)
     # Keep only sessions with label (mood != undefined)
-    df = df[df['Mood'] != 'undefined'].reset_index(drop=True)
+    df = df[(df['Mood'] != 'undefined') & 
+            (df['Mood'] != 'undefined TIMEOUT')].reset_index(drop=True)
     df = df.round(4)
     # Keep only users with number of sessions > 10
     if len(df) < 10:

@@ -1,6 +1,6 @@
 import os
 
-# os.chdir('/home/jason/Documents/Thesis/TypingData/test')
+# os.chdir('/home/jason/Documents/Thesis/TypingData/Android')
 
 # import statistics
 
