@@ -98,10 +98,16 @@ def filesextract(dirname):
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
             os.chdir(os.path.abspath(root))
+            date = {}
             # Session-Keystrokes file 'timestamp.json'
             if filename.startswith('Emotion') and\
                filename.endswith('.json'):
                 statistics = emotion(filename)
+                tmp = str((os.path.basename(os.getcwd())))
+                try1 = tmp.split('.')
+                tmp = try1[2] + '-' + try1[1] + '-' + try1[0]
+                date = {'Date': tmp}
+                statistics.update(date)
                 # Open .csv  file and append statistics 
                 file_exists = os.path.isfile('./emotion.csv')
                 with open('emotion.csv', 'a', newline='') as csvfile:
@@ -117,6 +123,13 @@ def filesextract(dirname):
                (not filename.startswith('Info')) and\
                filename.endswith('.json'):
                 statistics = keystrokes(filename)
+                tmp = str((os.path.basename(os.getcwd())))
+                try1 = tmp.split('.')
+                tmp = try1[2] + '-' + try1[1] + '-' + try1[0]
+                date = {'Date': tmp}
+                # print(date)
+                statistics.update(date)
+                # print(statistics)
 
                 # Open .csv file and append statistics 
                 file_exists = os.path.isfile('./statistics.csv')
@@ -148,6 +161,7 @@ def filesextract(dirname):
                 data = pd.read_csv(filename)
                 fieldnames = ['Mood', 'Physical_State']
                 dfemotion = pd.DataFrame(data)
+                dfemotion = dfemotion[['Mood', 'Physical_State']]
                 pathemotion = os.path.abspath(root)
                 flagemotion = True
             # 'statistics.csv' and 'emotion.csv' need to be from the
@@ -165,7 +179,7 @@ def filesextract(dirname):
                     # Needed for header 
                     file_exists = os.path.isfile('./statistics_user.csv')
                     with open('statistics_user.csv', 'a', newline='') as csvfile:
-                        fieldnames = ['Keystrokes', 'Mood', 'Physical_State']
+                        fieldnames = ['Keystrokes', 'Date', 'Mood', 'Physical_State']
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:
                             writer.writeheader()
@@ -235,7 +249,9 @@ def users(dirname):
                                       'Keystrokes_Mean', 'Happy',
                                       'Sad', 'Neutral', 'Stressed',
                                       'Postponing', 'undefined',
-                                      'Sessions_Number']        
+                                      'Sessions_Number',
+                                      # 'term1', 'term2', 'term3', 'term4', 'term5'
+                                      'sessions/day']        
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:
                             writer.writeheader()
@@ -256,7 +272,7 @@ def process(csvfile):
     data = pd.read_csv(csvfile)
     df = pd.DataFrame(data)
     sessionsnumber = len(df)
-    keystrokesmean = round(df['Keystrokes'].mean(), 2)
+    keystrokesmean = df['Keystrokes'].mean()
     happy = len(df[df['Mood'] == 'Happy']) + \
         len(df[df['Mood'] == 'Happy TIMEOUT'])
     sad = len(df[df['Mood'] == 'Sad']) + \
@@ -268,11 +284,32 @@ def process(csvfile):
     postponing = len(df[df['Mood'] == 'Postponing']) + \
         len(df[df['Mood'] == 'Postponing TIMEOUT'])
     undefined = len(df[df['Mood'] == 'undefined']) + \
-        len(df[df['Mood'] == 'undefined TIMEOUT'])        
+        len(df[df['Mood'] == 'undefined TIMEOUT'])
+    # term1 = len(df[df['Date'].str.endswith('12.2018')]) + \
+    #     len(df[df['Date'].str.endswith('01.2019')]) + \
+    #     len(df[df['Date'].str.endswith('02.2019')])
+    # term2 = len(df[df['Date'].str.endswith('03.2019')]) + \
+    #     len(df[df['Date'].str.endswith('04.2019')]) + \
+    #     len(df[df['Date'].str.endswith('05.2019')]) + \
+    #     len(df[df['Date'].str.endswith('06.2019')])
+    # term3 = len(df[df['Date'].str.endswith('07.2019')]) + \
+    #     len(df[df['Date'].str.endswith('08.2019')]) + \
+    #     len(df[df['Date'].str.endswith('09.2019')])
+    # term4 = len(df[df['Date'].str.endswith('10.2019')]) + \
+    #     len(df[df['Date'].str.endswith('11.2019')]) + \
+    #     len(df[df['Date'].str.endswith('12.2019')])
+    # term5 = len(df[df['Date'].str.endswith('01.2020')]) + \
+    #     len(df[df['Date'].str.endswith('02.2020')]) + \
+    #     len(df[df['Date'].str.endswith('03.2020')])
+    sessionsperday = (sum(df['Date'].value_counts()) / df['Date'].nunique())
+    
     statistics = {'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
                   'Sad': sad, 'Neutral': neutral, 'Stressed': stressed,
                   'Postponing': postponing,
-                  'Undefined': undefined, 'Sessions_Number': sessionsnumber}
+                  'Undefined': undefined, 'Sessions_Number': sessionsnumber,
+                  # 'term1': term1, 'term2': term2, 'term3': term3,
+                  # 'term4': term4, 'term5': term5
+                  'sessions/day': sessionsperday}
 
     df = pd.DataFrame.from_dict([statistics])
     return df

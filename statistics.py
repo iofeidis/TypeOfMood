@@ -39,6 +39,10 @@ def extract(jsonFile):
     userage = data['USER_AGE']
     # UserGender
     usergender = data['USER_GENDER']
+    # Date of Session
+    date = data['DATE_DATA']
+    # Format: Y-M-d
+    date = date.split(',')[0]
 
     # Total Number of Characters
     length = len(datadown)
@@ -51,7 +55,8 @@ def extract(jsonFile):
     # Insert session statistics into Statistics Dictionary
     statistics = {'UserID': userid, 'User_Age': userage,
                   'User_Gender': usergender, 'Keystrokes': length,
-                  'Mood': mood, 'Physical_State': physicalstate}
+                  'Mood': mood, 'Physical_State': physicalstate,
+                  'Date': date}
 
     # Open statistics.csv file and append statistics
     file_exists = os.path.isfile('./statistics.csv')
@@ -97,7 +102,8 @@ def filesextract(dirname):
             if filename.endswith('statistics.csv'):
                 data = pd.read_csv(filename)
                 fieldnames = ['UserID', 'User_Age', 'User_Gender',
-                              'Keystrokes', 'Mood', 'Physical_State']
+                              'Keystrokes', 'Mood', 'Physical_State',
+                              'Date']
                 df = pd.DataFrame(data)
                 os.chdir(dirname)
                 # Open .csv file and append statistics
@@ -105,10 +111,12 @@ def filesextract(dirname):
                 file_exists = os.path.isfile('./statistics_user.csv')
                 with open('statistics_user.csv', 'a', newline='') as csvfile:
                     fieldnames = ['UserID', 'User_Age', 'User_Gender',
-                                  'Keystrokes', 'Mood', 'Physical_State']
+                                  'Keystrokes', 'Mood', 'Physical_State',
+                                  'Date']
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
+                
                 df.to_csv('statistics_user.csv', mode='a', index=False,
                           header=False)
     return
@@ -150,7 +158,10 @@ def users(dirname):
                                   'Keystrokes_Mean', 'Happy',
                                   'Sad', 'Neutral', 'Stressed',
                                   'Postponing', 'undefined',
-                                  'Session_Number']        
+                                  'Session_Number', 
+                                  # 'term1', 'term2', 'term3', 'term4', 'term5'
+                                  'sessions/day1', 'sessions/day2',
+                                  'sessions/day3', 'sessions/day4']        
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
@@ -169,6 +180,7 @@ def users(dirname):
 def process(csvfile):
     data = pd.read_csv(csvfile)
     df = pd.DataFrame(data)
+    # df.sort_values(by=['Date'])
     kf = df.head(1)
     sessionsnumber = len(df)
     userid = kf.squeeze('rows')['UserID']
@@ -186,13 +198,59 @@ def process(csvfile):
     postponing = len(df[df['Mood'] == 'Postponing']) + \
         len(df[df['Mood'] == 'Postponing TIMEOUT'])
     undefined = len(df[df['Mood'] == 'undefined']) + \
-        len(df[df['Mood'] == 'undefined TIMEOUT'])            
+        len(df[df['Mood'] == 'undefined TIMEOUT'])
+    # term1 = len(df[df['Date'].str.startswith('2018-12')]) + \
+    #     len(df[df['Date'].str.startswith('2019-01')]) + \
+    #     len(df[df['Date'].str.startswith('2019-02')])
+    # term2 = len(df[df['Date'].str.startswith('2019-03')]) + \
+    #     len(df[df['Date'].str.startswith('2019-04')]) + \
+    #     len(df[df['Date'].str.startswith('2019-05')]) + \
+    #     len(df[df['Date'].str.startswith('2019-06')])
+    # term3 = len(df[df['Date'].str.startswith('2019-07')]) + \
+    #     len(df[df['Date'].str.startswith('2019-08')]) + \
+    #     len(df[df['Date'].str.startswith('2019-09')])
+    # term4 = len(df[df['Date'].str.startswith('2019-10')]) + \
+    #     len(df[df['Date'].str.startswith('2019-11')]) + \
+    #     len(df[df['Date'].str.startswith('2019-12')])
+    # term5 = len(df[df['Date'].str.startswith('2020-01')]) + \
+    #     len(df[df['Date'].str.startswith('2020-02')]) + \
+    #     len(df[df['Date'].str.startswith('2020-03')])
+    dftemp = df[df['Date'] < '2020-01-25']
+    days = dftemp['Date'].nunique()
+    if days:
+        sessionsperday1 = (len(dftemp)) / days
+    else:
+        sessionsperday1 = 0
+    dftemp = df[(df['Date'] < '2020-02-06') & (df['Date'] >= '2020-01-25')]
+    days = dftemp['Date'].nunique()
+    if days:
+        sessionsperday2 = (len(dftemp)) / days
+    else:
+        sessionsperday2 = 0
+    dftemp = df[(df['Date'] < '2020-02-27') & (df['Date'] >= '2020-02-06')]
+    days = dftemp['Date'].nunique()
+    if days:
+        sessionsperday3 = (len(dftemp)) / days
+    else:
+        sessionsperday3 = 0
+    dftemp = df[df['Date'] > '2020-02-26']
+    days = dftemp['Date'].nunique()
+    if days:
+        sessionsperday4 = (len(dftemp)) / days
+    else:
+        sessionsperday4 = 0                   
     statistics = {'UserID': userid, 'User_Age': userage,
                   'User_Gender': usergender,
                   'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
                   'Sad': sad, 'Neutral': neutral, 'Stressed': stressed,
                   'Postponing': postponing,
-                  'Undefined': undefined, 'Sessions_Number': sessionsnumber}
+                  'Undefined': undefined, 'Sessions_Number': sessionsnumber,
+                  # 'term1': term1, 'term2': term2, 'term3': term3,
+                  # 'term4': term4, 'term5': term5
+                  'sessions/day_1': sessionsperday1,
+                  'sessions/day_2': sessionsperday2,
+                  'sessions/day_3': sessionsperday3,
+                  'sessions/day_4': sessionsperday4}
 
     df = pd.DataFrame.from_dict([statistics])
     return df

@@ -1,0 +1,155 @@
+Saturday 17:00 
+LeaveOneGroupOut
+Random Forest Regression for PHQ9 on iOS without PV
+ 
+Training Features Shape: (1559, 21)
+Training Labels Shape: (1559,)
+Testing Features Shape: (23, 21)
+Testing Labels Shape: (23,)
+Mean Absolute Error: 6.25 degrees.
+Accuracy: 10.68 %.
+Training Features Shape: (1568, 21)
+Training Labels Shape: (1568,)
+Testing Features Shape: (14, 21)
+Testing Labels Shape: (14,)
+Mean Absolute Error: 1.38 degrees.
+Accuracy: 90.16 %.
+Training Features Shape: (1537, 21)
+Training Labels Shape: (1537,)
+Testing Features Shape: (45, 21)
+Testing Labels Shape: (45,)
+Mean Absolute Error: 8.35 degrees.
+Accuracy: 50.9 %.
+Training Features Shape: (1551, 21)
+Training Labels Shape: (1551,)
+Testing Features Shape: (31, 21)
+Testing Labels Shape: (31,)
+Mean Absolute Error: 10.22 degrees.
+Accuracy: -240.66 %.
+Training Features Shape: (1569, 21)
+Training Labels Shape: (1569,)
+Testing Features Shape: (13, 21)
+Testing Labels Shape: (13,)
+Mean Absolute Error: 3.34 degrees.
+Accuracy: 72.14 %.
+Training Features Shape: (1427, 21)
+Training Labels Shape: (1427,)
+Testing Features Shape: (155, 21)
+Testing Labels Shape: (155,)
+Mean Absolute Error: 3.09 degrees.
+Accuracy: 69.08 %.
+Training Features Shape: (1572, 21)
+Training Labels Shape: (1572,)
+Testing Features Shape: (10, 21)
+Testing Labels Shape: (10,)
+Mean Absolute Error: 3.59 degrees.
+Accuracy: 67.35 %.
+Training Features Shape: (1570, 21)
+Training Labels Shape: (1570,)
+Testing Features Shape: (12, 21)
+Testing Labels Shape: (12,)
+Mean Absolute Error: 7.11 degrees.
+Accuracy: -1.6 %.
+Training Features Shape: (1561, 21)
+Training Labels Shape: (1561,)
+Testing Features Shape: (21, 21)
+Testing Labels Shape: (21,)
+Mean Absolute Error: 4.17 degrees.
+Accuracy: 40.44 %.
+Training Features Shape: (1568, 21)
+Training Labels Shape: (1568,)
+Testing Features Shape: (14, 21)
+Testing Labels Shape: (14,)
+Mean Absolute Error: 8.51 degrees.
+Accuracy: -41.77 %.
+Training Features Shape: (1546, 21)
+Training Labels Shape: (1546,)
+Testing Features Shape: (36, 21)
+Testing Labels Shape: (36,)
+Mean Absolute Error: 3.85 degrees.
+Accuracy: 61.53 %.
+Training Features Shape: (1496, 21)
+Training Labels Shape: (1496,)
+Testing Features Shape: (86, 21)
+Testing Labels Shape: (86,)
+Mean Absolute Error: 3.88 degrees.
+Accuracy: 78.43 %.
+Training Features Shape: (1572, 21)
+Training Labels Shape: (1572,)
+Testing Features Shape: (10, 21)
+Testing Labels Shape: (10,)
+Mean Absolute Error: 6.87 degrees.
+Accuracy: -128.93 %.
+Training Features Shape: (1570, 21)
+Training Labels Shape: (1570,)
+Testing Features Shape: (12, 21)
+Testing Labels Shape: (12,)
+Mean Absolute Error: 5.79 degrees.
+Accuracy: 55.47 %.
+Training Features Shape: (1461, 21)
+Training Labels Shape: (1461,)
+Testing Features Shape: (121, 21)
+Testing Labels Shape: (121,)
+Mean Absolute Error: 8.4 degrees.
+Accuracy: 60.0 %.
+Training Features Shape: (1540, 21)
+Training Labels Shape: (1540,)
+Testing Features Shape: (42, 21)
+Testing Labels Shape: (42,)
+Mean Absolute Error: 10.61 degrees.
+Accuracy: -430.55 %.
+Training Features Shape: (1547, 21)
+Training Labels Shape: (1547,)
+Testing Features Shape: (35, 21)
+Testing Labels Shape: (35,)
+Mean Absolute Error: 1.32 degrees.
+Accuracy: 88.99 %.
+Training Features Shape: (1552, 21)
+Training Labels Shape: (1552,)
+Testing Features Shape: (30, 21)
+Testing Labels Shape: (30,)
+Mean Absolute Error: 1.72 degrees.
+Accuracy: 84.33 %.
+Training Features Shape: (1264, 21)
+Training Labels Shape: (1264,)
+Testing Features Shape: (318, 21)
+Testing Labels Shape: (318,)
+Mean Absolute Error: 3.36 degrees.
+Accuracy: 77.61 %.
+Training Features Shape: (1544, 21)
+Training Labels Shape: (1544,)
+Testing Features Shape: (38, 21)
+Testing Labels Shape: (38,)
+Mean Absolute Error: 8.49 degrees.
+Accuracy: 57.56 %.
+Training Features Shape: (1465, 21)
+Training Labels Shape: (1465,)
+Testing Features Shape: (117, 21)
+Testing Labels Shape: (117,)
+Mean Absolute Error: 2.33 degrees.
+Accuracy: 80.58 %.
+Training Features Shape: (1461, 21)
+Training Labels Shape: (1461,)
+Testing Features Shape: (121, 21)
+Testing Labels Shape: (121,)
+Mean Absolute Error: 1.67 degrees.
+Accuracy: 84.79 %.
+Training Features Shape: (1507, 21)
+Training Labels Shape: (1507,)
+Testing Features Shape: (75, 21)
+Testing Labels Shape: (75,)
+Mean Absolute Error: 9.55 degrees.
+Accuracy: -90.95 %.
+Training Features Shape: (1570, 21)
+Training Labels Shape: (1570,)
+Testing Features Shape: (12, 21)
+Testing Labels Shape: (12,)
+Mean Absolute Error: 4.38 degrees.
+Accuracy: 74.26 %.
+Training Features Shape: (1391, 21)
+Training Labels Shape: (1391,)
+Testing Features Shape: (191, 21)
+Testing Labels Shape: (191,)
+Mean Absolute Error: 2.97 degrees.
+Accuracy: 78.76 %.
+
