@@ -1,247 +1,12 @@
+# plots.py
+# Script for generating statistics plots
+# Iason Ofeidis 2020
+
 import os
 import pandas as pd
 import matplotlib.pyplot as plt 
-import csv
-
-# data = pd.read_csv('output_user.csv')
-# df = pd.DataFrame(data)
-# df = df.dropna()
-# dftemp = df.group_by('Mood')
-
-# boxplot = df.boxplot(column=['HT_Mean'], by='Mood')
-# plt.show(boxplot)
-
-# Function for creating 'statistics_user_without_emotion.csv'
-# by merging all keystrokes sessions
-
-
-def stat_without_emotion(dirname):
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user_without_emotion.csv'):
-                os.remove(filename)
-
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics.csv'):
-                data = pd.read_csv(filename)
-                df = pd.DataFrame(data)
-                # df = df.replace('.', '/')
-                # Open .csv file and append statistics
-                # Needed for header 
-                os.chdir(os.path.abspath(os.path.join(os.getcwd(), "./..")))
-                file_exists = os.path.isfile('./statistics_user_without_emotion.csv')
-                with open('statistics_user_without_emotion.csv', 'a', newline='') \
-                        as csvfile:
-                    fieldnames = ['Keystrokes', 'Date']
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                    if not file_exists:
-                        writer.writeheader()
-                df.to_csv('statistics_user_without_emotion.csv', mode='a', index=False,
-                          header=False)    
-            
-# Function for creating 'statistics_user_without_keystrokes.csv'
-# by merging all 'emotion.csv'
-
-
-def stat_without_keystrokes(dirname):
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user_without_keystrokes.csv'):
-                os.remove(filename)
-
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('emotion.csv'):
-                data = pd.read_csv(filename)
-                df = pd.DataFrame(data)
-                # df = df.replace('.', '/')
-                # Open .csv file and append statistics
-                # Needed for header 
-                os.chdir(os.path.abspath(os.path.join(os.getcwd(), "./..")))
-                file_exists = \
-                    os.path.isfile('./statistics_user_without_keystrokes.csv')
-                with open('statistics_user_without_keystrokes.csv',
-                          'a', newline='') as csvfile:
-                    fieldnames = ['Mood', 'Physical_State', 'Date']
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                    if not file_exists:
-                        writer.writeheader()
-                df.to_csv('statistics_user_without_keystrokes.csv', mode='a', index=False,
-                          header=False)    
-        
-# Function for looping across all users and plotting for each one
-# their rate of sessions in time
-
-
-def sessions(dirname):
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user_without_emotion.csv'):
-                os.remove(filename)  
-
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user_without_emotion.csv'):          
-                data = pd.read_csv('statistics_user_without_emotion.csv')
-                df = pd.DataFrame(data)
-                df = df[df['Keystrokes'] > 5]
-                # print(len(df['Date'].value_counts()))
-                if len(df['Date'].value_counts()) > 1:
-                    id = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))
-                    id = id.split('/')[-1]
-                    df['Date'].value_counts().sort_index().plot.line(title=id)
-                    # plt.tight_layout()
-                    plt.show()
-                    # plt.gcf()
-                    # print(os.getcwd())
-                    # plt.savefig(os.getcwd() + '/figure.png')
-
-# Function for looping across all users and plotting for each one
-# their rate of emotions in time (incomplete!)
-
-
-def emotion(dirname):
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('figure.png'):
-                os.remove(filename)  
-
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user_without_keystrokes.csv'):          
-                data = pd.read_csv('statistics_user_without_keystrokes.csv')
-                df = pd.DataFrame(data)
-                df = df[df['Mood'] == 'Happy']
-                # df = df[df['Keystrokes'] > 5]
-                # print(len(df['Date'].value_counts()))
-                if len(df['Date'].value_counts()) > 1:
-                    id = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))
-                    id = id.split('/')[-1]
-                    df['Date'].value_counts().sort_index().plot.line(title=id)
-                    # plt.tight_layout()
-                    plt.show()
-                    # plt.gcf()
-                    # print(os.getcwd())
-                    # plt.savefig(os.getcwd() + '/figure.png')
-
-# Function for creating 'statistics_total_sessions.csv' in iOS files
-# by merging all 'statistics_user_without_emotions.csv'
-
-
-def sessions_total_ios(dirname):
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user_without_emotion.csv'):
-                data = pd.read_csv(filename)
-                df = pd.DataFrame(data)
-                os.chdir(dirname)
-                # Open .csv file and append total statistics
-                # Needed for header 
-                file_exists = os.path.isfile('./statistics_total_sessions.csv')
-                with open('statistics_total_sessions.csv',
-                          'a', newline='') as csvfile:
-                    fieldnames = ['Keystrokes', 'Date']        
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                    if not file_exists:
-                        writer.writeheader()
-                df.to_csv('statistics_total_sessions.csv', mode='a', index=False,
-                          header=False)
-
-# Function for creating 'statistics_total_sessions.csv' in Android files
-# by merging all 'statistics_user.csv'
-
-
-def sessions_total_android(dirname):
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user.csv'):
-                data = pd.read_csv(filename)
-                df = pd.DataFrame(data)
-                df = df[['Keystrokes', 'Date']]
-                os.chdir(dirname)
-                # Open .csv file and append total statistics
-                # Needed for header 
-                file_exists = os.path.isfile('./statistics_total_sessions.csv')
-                with open('statistics_total_sessions.csv',
-                          'a', newline='') as csvfile:
-                    fieldnames = ['Keystrokes', 'Date']        
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                    if not file_exists:
-                        writer.writeheader()
-                df.to_csv('statistics_total_sessions.csv', mode='a', index=False,
-                          header=False)
-
-# Function for creating 'statistics_total_emotions.csv' in iOS files
-# by merging all 'statistics_user_without_keystrokes.csv'
-
-
-def emotions_total_ios(dirname):
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user_without_keystrokes.csv'):
-                data = pd.read_csv(filename)
-                df = pd.DataFrame(data)
-                os.chdir(dirname)
-                # Open .csv file and append total statistics
-                # Needed for header 
-                file_exists = os.path.isfile('./statistics_total_emotions.csv')
-                with open('statistics_total_emotions.csv',
-                          'a', newline='') as csvfile:
-                    fieldnames = ['Mood', 'Physical_State', 'Date']        
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                    if not file_exists:
-                        writer.writeheader()
-                df.to_csv('statistics_total_emotions.csv', mode='a', index=False,
-                          header=False)
-
-# Function for creating 'statistics_total_emotions.csv' in Android files
-# by merging all 'statistics_user.csv'
-
-
-def emotions_total_android(dirname):
-    os.chdir(dirname)
-    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-        for filename in files:
-            os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user.csv'):
-                data = pd.read_csv(filename)
-                df = pd.DataFrame(data)
-                df = df[['Mood', 'Physical_State', 'Date']]
-                os.chdir(dirname)
-                # Open .csv file and append total statistics
-                # Needed for header 
-                file_exists = os.path.isfile('./statistics_total_emotions.csv')
-                with open('statistics_total_emotions.csv',
-                          'a', newline='') as csvfile:
-                    fieldnames = ['Mood', 'Physical_State', 'Date']        
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                    if not file_exists:
-                        writer.writeheader()
-                df.to_csv('statistics_total_emotions.csv', mode='a', index=False,
-                          header=False)
+import seaborn as sns
+# import csv
 
 # Clean one dataframe from 'Postponing, undefined, TIMEOUT' values
 
@@ -256,46 +21,151 @@ def clean(df):
     df = df.replace('Sickness TIMEOUT', 'Sickness')
     df = df.replace('undefined TIMEOUT', 'undefined')
     df = df.replace('Postponing TIMEOUT', 'Postponing')
-    df = df[(df['Mood'] != 'undefined') & 
+    df = df[(df['Mood'] != 'undefined') &
             (df['Mood'] != 'Postponing') &
             (df['Physical_State'] != 'Postponing') & 
             (df['Physical_State'] != 'undefined')].reset_index(drop=True)
 
     return df
 
-# Plotting the evolution of Mood labels in time   
+# Plotting the evolution of Mood labels in time
+# Just change label and device variables
 
 
-def evol(df, name):
+def evol(df, name, device, label):
+    # label = 'Mood'
+    # device = 'iOS'
+    # Clean df from undefined, Postponing, TIMEOUT values
     df = clean(df)
-    # Keep only Mood and Date columns
-    df = df[['Mood', 'Date']]
+    # Keep only sessions with NumberOfKeystrokes > 5
+    # df = df[df['Keystrokes'] > 5]
+    # Keep only label and Date columns
+    df = df[[label, 'Date']]
+    # str(Date) to datetime
     df['Date'] = pd.to_datetime(df['Date'])
-    df = df[df['Date'] > '2019.09.01']
+    # Keep only recent sessions
+    df = df[df['Date'] > '2019-11-01']
+    df = df.drop_duplicates()
+    # Count labels for each specific Date
     df = df.groupby(df.columns.tolist()).size().reset_index().\
         rename(columns={0: 'records'})
-    df = df.pivot(index='Date', columns='Mood', values='records')
+    # Pivot necessary for plotting
+    df = df.pivot(index='Date', columns=label, values='records')    
     df = df.fillna(0)
-    userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))
-    userid = userid.split('/')[-1]
-    title = 'UserID: ' + userid + ', Device: iOS'
+    userid = str(os.path.abspath(os.path.join(os.getcwd(), "./."))).split('/')[-1]
+    title = 'UserID: ' + userid + ', Device: ' + device
     if not df.empty:
         if len(df.columns) > 1:
             df.plot(linewidth=4, title=title)
+            plt.axvline(x='2020-01-25', linewidth=2, color='r')
+            plt.axvline(x='2020-02-28', linewidth=2, color='g')
         else:
             if len(df) == 1:
                 df.plot.bar(title=title)
-        plt.gcf()
-        # print(os.getcwd())
-        os.chdir('/home/jason/Documents/Thesis/TypingData/iOS/Plots')
-        plt.savefig(os.getcwd() + '/' + name + '.png')
-        # plt.show()
-    else:
-        print('DF is empty')
+            else:
+                df.plot(linewidth=4, title=title)
+                plt.axvline(x='2020-01-25', linewidth=2, color='r')
+                plt.axvline(x='2020-02-28', linewidth=2, color='g')
+        # plt.gcf()
+        # os.chdir('/home/jason/Documents/Thesis/TypingData/' + device + '/Plots')
+        # plt.savefig(os.getcwd() + '/' + name + '.png')
+        plt.show()
+        plt.close()
+
+# Plotting the evolution of Mood labels in time
+# Just change label and device variables
+
+
+def label_distribution(df, name, device, label):
+    # Clean df from undefined, Postponing, TIMEOUT values
+    df = clean(df)
+    # Keep only sessions with NumberOfKeystrokes > 5
+    # df = df[df['Keystrokes'] > 5]
+    # Keep only label and Date columns
+    df = df[[label, 'Date']]
+    # Keep only recent sessions
+    df = df[df['Date'] > '2019-12-25']
+    df = df.drop_duplicates()
+    df.loc[(df.Date < '2020-01-25'), 'Date'] = 'period1'
+    df.loc[(df.Date >= '2020-01-25') & 
+           (df.Date < '2020-02-28') & 
+           (df.Date != 'period1'), 'Date'] = 'period2'
+    df.loc[(df.Date >= '2020-02-28') & 
+           (df.Date != 'period1') &
+           (df.Date != 'period2'), 'Date'] = 'period3'
+    df = df.sort_values(by=['Date'])
+
+    userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+        .split('/')[-1]
+    title = 'UserID: ' + userid + ', Device: ' + device
+    if not df.empty:
+        if (df.Date.nunique() > 1):
+            # print(len(df))
+            df.groupby(label).Date.value_counts().unstack(1).plot.barh(title=title)
+            plt.gcf()
+            # os.chdir('/home/jason/Documents/Thesis/TypingData/' + device + '/Plots')
+            # plt.savefig(os.getcwd() + '/' + name + label + '.png')
+            plt.show()
+            plt.close()
+
+
+def dynamics_distribution(df, name, device):
+    """ Plot the distribution of keystroke dynamics in 3 periods"""
+    df = df.dropna()
+    # Keep only recent sessions
+    df = df[df['Date'] > '2019-12-25']
+    df.loc[(df.Date < '2020-01-25'), 'Date'] = 'period1'
+    df.loc[(df.Date >= '2020-01-25') & 
+           (df.Date < '2020-02-28') & 
+           (df.Date != 'period1'), 'Date'] = 'period2'
+    df.loc[(df.Date >= '2020-02-28') & 
+           (df.Date != 'period1') &
+           (df.Date != 'period2'), 'Date'] = 'period3'
+    df = df.sort_values(by=['Date'])
+    userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+        .split('/')[-1]
+    title = 'UserID: ' + userid + ', Device: ' + device
+    # Cut extreme values
+    if device == 'iOS':
+        df = df[df.Hold_Time < 0.3]
+        df = df[df.Speed < 5000]
+        df = df[df.Flight_Time < 3]
+    elif device == 'Android':
+        df = df[df.Speed < 5]
+        df = df[df.Press_Flight_Rate < 10]
+    
+    # Keep only users with all 3 periods
+    if not df.empty and ('period1' in df.Date.values) and \
+                        ('period3' in df.Date.values):
+        # fig, axs = plt.subplots(2, 1)
+        sns.set() 
+        # df.Hold_Time.hist(by=df.Date)
+        os.chdir('/home/jason/Documents/Thesis/TypingData/' + device + '/Plots')
+        sns.violinplot(y=df.Date, x=df.Hold_Time, bw=.2).set_title(title)
+        # plt.savefig(os.getcwd() + '/' + name + '_ht.png')
+        plt.show()
+        plt.close()
+        sns.violinplot(y=df.Date, x=df.Flight_Time, bw=.2).set_title(title)
+        # plt.savefig(os.getcwd() + '/' + name + '_ft.png')
+        plt.show()
+        plt.close()
+        sns.violinplot(y=df.Date, x=df.Speed, bw=.2).set_title(title)
+        # plt.savefig(os.getcwd() + '/' + name + '_sp.png')
+        plt.show()
+        plt.close()
+        sns.violinplot(y=df.Date, x=df.Press_Flight_Rate, bw=.2).set_title(title)
+        # plt.savefig(os.getcwd() + '/' + name + '_pfr.png')
+        plt.show()
+        plt.close()
+        print('------------------------------------------------------------')
+
+    return
+
 # Loop across files in directory
 
 
-def multiline(dirname):
+def multiline(dirname, device, label, plot):
+    # Delete previous versions of .png files in directory
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
@@ -307,26 +177,57 @@ def multiline(dirname):
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
             os.chdir(os.path.abspath(root))
-            userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))
-            userid = userid.split('/')[-1]
-            # Android
-            # if filename.endswith('statistics_user.csv'):
-            # iOS
-            if filename.endswith('statistics_user_without_keystrokes.csv'):
-                data = pd.read_csv(filename)
-                df = pd.DataFrame(data)
-                df = clean(df)
-                if not df.empty:
-                    evol(df, userid)
-        
+            # UserID is the name of parent directory of file
+            userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                .split('/')[-1]
+            if device == 'Android':
+                if plot == 'evolution':
+                    if filename.endswith('statistics_user.csv'):
+                        data = pd.read_csv(filename)
+                        df = pd.DataFrame(data)
+                        if not df.empty:
+                            evol(df, userid, device, label)
+                elif plot == 'distribution':
+                    if filename.endswith('statistics_user.csv'):
+                        data = pd.read_csv(filename)
+                        df = pd.DataFrame(data)
+                        if not df.empty:
+                            label_distribution(df, userid, device, label)
+                elif plot == 'dynamics':
+                    if filename.endswith('dynamics_user.csv'):
+                        data = pd.read_csv(filename)
+                        df = pd.DataFrame(data)
+                        if not df.empty:
+                            dynamics_distribution(df, userid, device)
+
+            if device == 'iOS':
+                if plot == 'evolution':
+                    if filename.endswith('statistics_user_without_keystrokes.csv'):
+                        data = pd.read_csv(filename)
+                        df = pd.DataFrame(data)
+                        if not df.empty:
+                            evol(df, userid, device, label)
+                elif plot == 'distribution':
+                    if filename.endswith('statistics_user_without_keystrokes.csv'):
+                        data = pd.read_csv(filename)
+                        df = pd.DataFrame(data)
+                        if not df.empty:
+                            label_distribution(df, userid, device, label)
+                elif plot == 'dynamics':
+                    if filename.endswith('dynamics_user.csv'):
+                        data = pd.read_csv(filename)
+                        df = pd.DataFrame(data)
+                        if not df.empty:
+                            dynamics_distribution(df, userid, device)
 
 # Workflow
 
+# os.chdir('/home/jason/Documents/Thesis/TypingData/iOS')
+# os.chdir('/home/jason/Documents/Thesis/TypingData/Android')
+# dirname = os.getcwd()
+# os.chdir(dirname)
 
-os.chdir('/home/jason/Documents/Thesis/TypingData/iOS')
-dirname = os.getcwd()
-os.chdir(dirname)
-multiline(os.getcwd())
+# multiline(os.getcwd(), 'Android', 'Mood')
 
 # stat_without_keystrokes(os.path.abspath(dirname))
 # emotion(os.getcwd())
