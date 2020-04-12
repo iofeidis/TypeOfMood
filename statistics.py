@@ -39,6 +39,8 @@ def extract(jsonFile):
     userage = data['USER_AGE']
     # UserGender
     usergender = data['USER_GENDER']
+    # UserPHQ9
+    userphq9 = data['USER_PHQ9']
     # Date of Session
     date = data['DATE_DATA']
     # Format: Y-M-d
@@ -53,7 +55,8 @@ def extract(jsonFile):
     # Duration of Session (in msec)
     # duration = datasession['StopDateTime'] - datasession['StartDateTime']
     # Insert session statistics into Statistics Dictionary
-    statistics = {'UserID': userid, 'User_Age': userage,
+    statistics = {'UserID': userid, 'User_PHQ9': userphq9, 
+                  'User_Age': userage,
                   'User_Gender': usergender, 'Keystrokes': length,
                   'Mood': mood, 'Physical_State': physicalstate,
                   'Date': date}
@@ -101,7 +104,8 @@ def filesextract(dirname):
             os.chdir(os.path.abspath(root))
             if filename.endswith('statistics.csv'):
                 data = pd.read_csv(filename)
-                fieldnames = ['UserID', 'User_Age', 'User_Gender',
+                fieldnames = ['UserID', 'User_PHQ9', 
+                              'User_Age', 'User_Gender',
                               'Keystrokes', 'Mood', 'Physical_State',
                               'Date']
                 df = pd.DataFrame(data)
@@ -110,7 +114,8 @@ def filesextract(dirname):
                 # Needed for header
                 file_exists = os.path.isfile('./statistics_user.csv')
                 with open('statistics_user.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['UserID', 'User_Age', 'User_Gender',
+                    fieldnames = ['UserID', 'User_PHQ9', 
+                                  'User_Age', 'User_Gender',
                                   'Keystrokes', 'Mood', 'Physical_State',
                                   'Date']
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
@@ -154,7 +159,8 @@ def users(dirname):
                 # Needed for header
                 file_exists = os.path.isfile('./statistics_total.csv')            
                 with open('statistics_total.csv', 'a', newline='') as csvfile:
-                    fieldnames = ['UserID', 'User_Age', 'User_Gender',
+                    fieldnames = ['UserID', 'User_PHQ9', 
+                                  'User_Age', 'User_Gender',
                                   'Keystrokes_Mean', 'Happy',
                                   'Sad', 'Neutral', 'Stressed',
                                   'Postponing', 'undefined',
@@ -184,6 +190,7 @@ def process(csvfile):
     kf = df.head(1)
     sessionsnumber = len(df)
     userid = kf.squeeze('rows')['UserID']
+    userphq9 = kf.squeeze('rows')['User_PHQ9']
     userage = kf.squeeze('rows')['User_Age']
     usergender = kf.squeeze('rows')['User_Gender']
     keystrokesmean = round(df['Keystrokes'].mean(), 2)
@@ -239,7 +246,8 @@ def process(csvfile):
         sessionsperday4 = (len(dftemp)) / days
     else:
         sessionsperday4 = 0                   
-    statistics = {'UserID': userid, 'User_Age': userage,
+    statistics = {'UserID': userid, 'User_Phq9': userphq9, 
+                  'User_Age': userage,
                   'User_Gender': usergender,
                   'Keystrokes_Mean': keystrokesmean, 'Happy': happy,
                   'Sad': sad, 'Neutral': neutral, 'Stressed': stressed,

@@ -1,6 +1,6 @@
 import os
 
-# os.chdir('/home/jason/Documents/Thesis/TypingData/test')
+# os.chdir('/home/jason/Documents/Thesis/TypingData/Android')
 
 # STATISTICS
 # import statistics
@@ -31,9 +31,15 @@ import os
 
 # analysis.regression(df)
 
-# PLOTS
-import plots
-os.chdir('/home/jason/Documents/Thesis/TypingData/iOS')
-# plots.multiline(os.getcwd(), 'Android', 'Physical_State')
-plots.multiline(os.getcwd(), 'iOS', 'label')
+# # PLOTS
+# import plots
+# os.chdir('/home/jason/Documents/Thesis/TypingData/iOS')
+# # plots.multiline(os.getcwd(), 'Android', 'Physical_State')
+# plots.multiline(os.getcwd(), 'iOS', 'label')
 
+# import patientsfind
+# patientsfind.patientsloop()
+
+import statisticsall
+os.chdir('/home/jason/Documents/Thesis/TypingData/iOS')
+statisticsall.dynamics_total(os.getcwd(), 'iOS')

@@ -7,12 +7,13 @@ import pandas as pd
 # import matplotlib.pyplot as plt 
 import csv
 import json
+import patientsfind
 
-# Function for creating 'statistics_user_without_emotion.csv'
-# by merging all keystrokes sessions
 
 
 def stat_without_emotion(dirname):
+    """ Function for creating 'statistics_user_without_emotion.csv'
+        by merging all keystrokes sessions"""
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
@@ -41,16 +42,16 @@ def stat_without_emotion(dirname):
                 df.to_csv('statistics_user_without_emotion.csv', mode='a', index=False,
                           header=False)    
 
-# Function for creating 'statistics_user_without_keystrokes.csv'
-# by merging all 'emotion.csv'
-
 
 def stat_without_keystrokes(dirname):
+    """ Function for creating 'statistics_user_without_keystrokes.csv'
+        by merging all 'emotion.csv'"""
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
             os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user_without_keystrokes.csv'):
+            if filename.endswith('statistics_user_without_keystrokes.csv') or \
+               filename.endswith('statistics_user_info_emotion.csv'):
                 os.remove(filename)
 
     os.chdir(dirname)
@@ -73,13 +74,51 @@ def stat_without_keystrokes(dirname):
                     if not file_exists:
                         writer.writeheader()
                 df.to_csv('statistics_user_without_keystrokes.csv', mode='a', index=False,
-                          header=False)    
+                          header=False)
+    
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
+        for filename in files:
+            os.chdir(os.path.abspath(root))
+            if filename.endswith('Info.json'):
+                data = patientsfind.info(filename)
+                df = pd.DataFrame([data])
+                dfinfo = df.User_PHQ9
+                # df = df.replace('.', '/')
+                # Open .csv file and append statistics
+                # Needed for header 
+                # os.chdir(os.path.abspath(os.path.join(os.getcwd(), "./..")))
+                file_exists = \
+                    os.path.isfile('./statistics_user_without_keystrokes.csv')
+                if file_exists:
+                    data = pd.read_csv('statistics_user_without_keystrokes.csv')
+                    dfstat = pd.DataFrame(data)
 
-# Function for creating 'statistics_total_sessions.csv' in iOS files
-# by merging all 'statistics_user_without_emotions.csv'
+                    df = pd.concat([dfinfo, dfstat], ignore_index=True, axis=1)
+                    df = df.fillna(method='ffill')
+                    file_exists = \
+                        os.path.isfile('./statistics_user_info_emotion.csv')
+                    with open('statistics_user_info_emotion.csv',
+                              'w', newline='') as csvfile:
+                        fieldnames = ['User_PHQ9', 'Mood', 'Physical_State', 'Date']
+                        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                        if not file_exists:
+                            writer.writeheader()
+                    df.to_csv('statistics_user_info_emotion.csv', mode='a', index=False,
+                              header=False)
+                
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
+        for filename in files:
+            os.chdir(os.path.abspath(root))
+            if filename.endswith('statistics_user_without_keystrokes.csv'):
+                os.remove(filename)
+            
 
 
 def sessions_total_ios(dirname):
+    """ Function for creating 'statistics_total_sessions.csv' in iOS files
+        by merging all 'statistics_user_without_emotions.csv'"""
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
@@ -100,11 +139,10 @@ def sessions_total_ios(dirname):
                 df.to_csv('statistics_total_sessions.csv', mode='a', index=False,
                           header=False)
 
-# Function for creating 'statistics_total_sessions.csv' in Android files
-# by merging all 'statistics_user.csv'
-
 
 def sessions_total_android(dirname):
+    """ Function for creating 'statistics_total_sessions.csv' in Android files
+        by merging all 'statistics_user.csv'"""
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
@@ -126,11 +164,10 @@ def sessions_total_android(dirname):
                 df.to_csv('statistics_total_sessions.csv', mode='a', index=False,
                           header=False)
 
-# Function for creating 'statistics_total_emotions.csv' in iOS files
-# by merging all 'statistics_user_without_keystrokes.csv'
-
 
 def emotions_total_ios(dirname):
+    """ Function for creating 'statistics_total_emotions.csv' in iOS files
+        by merging all 'statistics_user_without_keystrokes.csv'"""
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
@@ -151,11 +188,10 @@ def emotions_total_ios(dirname):
                 df.to_csv('statistics_total_emotions.csv', mode='a', index=False,
                           header=False)
 
-# Function for creating 'statistics_total_emotions.csv' in Android files
-# by merging all 'statistics_user.csv'
-
 
 def emotions_total_android(dirname):
+    """ Function for creating 'statistics_total_emotions.csv' in Android files
+        by merging all 'statistics_user.csv'"""
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
@@ -177,29 +213,30 @@ def emotions_total_android(dirname):
                 df.to_csv('statistics_total_emotions.csv', mode='a', index=False,
                           header=False)
 
-# Just add all 'statistics_user.csv' to a single .csv file
-
 
 def statistics_add(dirname):
+    """ Just add all 'statistics_user.csv' to a single .csv file"""
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
             os.chdir(os.path.abspath(root))
-            if filename.endswith('statistics_user.csv'):
+            # change filename depending on plots
+            if filename.endswith('statistics_user_info_emotion.csv'):
                 data = pd.read_csv(filename)
                 df = pd.DataFrame(data)
-                df = df[['Mood', 'Physical_State', 'Date']]
+                df = df[['User_PHQ9', 'Mood', 'Physical_State', 'Date']]
                 os.chdir(dirname)
                 # Open .csv file and append total statistics
                 # Needed for header 
-                file_exists = os.path.isfile('./statistics_total_added.csv')
-                with open('statistics_total_added.csv',
+                file_exists = os.path.isfile('./statistics_total_added_info.csv')
+                with open('statistics_total_added_info.csv',
                           'a', newline='') as csvfile:
-                    fieldnames = ['Mood', 'Physical_State', 'Date']        
+                    fieldnames = ['User_PHQ9', 
+                                  'Mood', 'Physical_State', 'Date']        
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
-                df.to_csv('statistics_total_added.csv', mode='a', index=False,
+                df.to_csv('statistics_total_added_info.csv', mode='a', index=False,
                           header=False)
 
 
@@ -321,7 +358,6 @@ def dynamics(jsonFile, device):
     return
 
 
-
 def dynamics_add(dirname, device):
     """ Just add all 'dynamics.csv' to a single 'dynamics_user.csv' file"""
     # Remove existing statistics related .csv files
@@ -424,3 +460,88 @@ def dynamics_users(dirname, device):
                 if ('2020' not in dir) and ('2019' not in dir):
                     os.chdir(os.path.join(root, dir))
                     dynamics_add(os.path.join(root, dir), device)
+
+
+def stat_info_emotion(dirname):
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
+        for filename in files:
+            os.chdir(os.path.abspath(root))
+            if filename.endswith('statistics_user_info_emotion.csv'):
+                os.remove(filename)
+
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
+        for filename in files:
+            os.chdir(os.path.abspath(root))
+            if filename.endswith('statistics_user_without_keystrokes.csv'):
+                data = pd.read_csv(filename)
+                df = pd.DataFrame(data)
+                # df = df.replace('.', '/')
+                # Open .csv file and append statistics
+                # Needed for header 
+                os.chdir(os.path.abspath(os.path.join(os.getcwd(), "./..")))
+                file_exists = \
+                    os.path.isfile('./statistics_user_without_keystrokes.csv')
+                with open('statistics_user_without_keystrokes.csv',
+                          'a', newline='') as csvfile:
+                    fieldnames = ['Mood', 'Physical_State', 'Date']
+                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    if not file_exists:
+                        writer.writeheader()
+                df.to_csv('statistics_user_without_keystrokes.csv', mode='a', index=False,
+                          header=False)    
+
+
+def dynamics_total(dirname, device):
+    """ Merge all dynamics_user.csv into a single dynamics_total.csv"""
+    peakdate = '2020-02-28'
+    if device == 'Android':
+        print('DO STH')
+    elif device == 'iOS':
+        os.chdir(dirname)
+        dfall = pd.DataFrame([])
+        for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+            for filename in files:
+                os.chdir(os.path.abspath(root))
+                if filename.endswith('dynamics_user.csv'):
+                    data = pd.read_csv(filename)
+                    dfstat = pd.DataFrame(data)
+                    userphq9 = -1
+                    userid = \
+                        str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                        .split('/')[-1]
+                    for rootb, dirsb, filesb in os.walk(os.getcwd(), topdown=True):
+                        for filenameb in filesb:
+                            if filenameb.endswith('Info.json'):
+                                userphq9 = patientsfind.info(filenameb)['User_PHQ9']
+                    dfstat = dfstat[dfstat['Date'] > '2019-12-25']
+                    dfstat.loc[(dfstat.Date < peakdate), 'Date'] = 'period1'
+                    dfstat.loc[(dfstat.Date >= peakdate) & 
+                               (dfstat.Date != 'period1'), 'Date'] = 'period2'
+                    if 'period1' in dfstat.Date.values and \
+                       'period2' in dfstat.Date.values:
+                        for value, dfdate in dfstat.groupby('Date'):
+                            stat = {'UserID': userid, 'User_PHQ9': userphq9,
+                                    'HT_Mean': dfdate.Hold_Time.mean(), 
+                                    'Date': value}
+                            df1 = pd.DataFrame([stat])
+                            dfall = pd.concat([dfall, df1])
+        dfall = dfall.reset_index(drop=True)
+        print(dfall.head(40))
+                    
+
+
+# Workflow
+
+# stat_without_keystrokes(os.path.abspath(dirname))
+# emotion(os.getcwd())
+# emotions_total_android(os.getcwd())
+# emotions_total_ios(os.getcwd())
+
+# stat_without_emotion(os.path.abspath(dirname))
+# sessions(os.getcwd())
+# sessions_total_android(os.getcwd())
+# sessions_total_ios(os.getcwd())
+
+
