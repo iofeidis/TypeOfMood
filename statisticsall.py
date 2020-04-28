@@ -216,6 +216,7 @@ def emotions_total_android(dirname):
 
 def statistics_add(dirname):
     """ Just add all 'statistics_user.csv' to a single .csv file"""
+
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
@@ -225,13 +226,18 @@ def statistics_add(dirname):
                 data = pd.read_csv(filename)
                 df = pd.DataFrame(data)
                 df = df[['User_PHQ9', 'Mood', 'Physical_State', 'Date']]
+                userid = \
+                    str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                    .split('/')[-1]
+                df1 = pd.DataFrame([{'UserID': userid}])
+                df = pd.concat([df1, df], axis=1).fillna(method='ffill')
                 os.chdir(dirname)
                 # Open .csv file and append total statistics
                 # Needed for header 
                 file_exists = os.path.isfile('./statistics_total_added_info.csv')
                 with open('statistics_total_added_info.csv',
                           'a', newline='') as csvfile:
-                    fieldnames = ['User_PHQ9', 
+                    fieldnames = ['UserID', 'User_PHQ9', 
                                   'Mood', 'Physical_State', 'Date']        
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
@@ -463,6 +469,7 @@ def dynamics_users(dirname, device):
 
 
 def stat_info_emotion(dirname):
+    """ UNNECESSARY """
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=False):
         for filename in files:
@@ -493,9 +500,8 @@ def stat_info_emotion(dirname):
                           header=False)    
 
 
-def dynamics_total(dirname, device):
-    """ Merge all dynamics_user.csv into a single dynamics_total.csv"""
-    peakdate = '2020-02-28'
+def dynamics_total(dirname, device, peakdate):
+    """ Merge all dynamics_user.csv into a single dynamics_total_added.csv """
     if device == 'Android':
         print('DO STH')
     elif device == 'iOS':
@@ -515,7 +521,7 @@ def dynamics_total(dirname, device):
                         for filenameb in filesb:
                             if filenameb.endswith('Info.json'):
                                 userphq9 = patientsfind.info(filenameb)['User_PHQ9']
-                    dfstat = dfstat[dfstat['Date'] > '2019-12-25']
+                    dfstat = dfstat[dfstat['Date'] > '2020-02-14']
                     dfstat.loc[(dfstat.Date < peakdate), 'Date'] = 'period1'
                     dfstat.loc[(dfstat.Date >= peakdate) & 
                                (dfstat.Date != 'period1'), 'Date'] = 'period2'
@@ -523,14 +529,88 @@ def dynamics_total(dirname, device):
                        'period2' in dfstat.Date.values:
                         for value, dfdate in dfstat.groupby('Date'):
                             stat = {'UserID': userid, 'User_PHQ9': userphq9,
-                                    'HT_Mean': dfdate.Hold_Time.mean(), 
+                            
+                                    'HT_Mean': dfdate.Hold_Time.mean(),
+                                    'HT_STD': dfdate.Hold_Time.std(),
+                                    'HT_Skewness': dfdate.Hold_Time.skew(),
+                                    'HT_Kurtosis': dfdate.Hold_Time.kurtosis(), 
+                                    
+                                    'FT_Mean': dfdate.Flight_Time.mean(),
+                                    'FT_STD': dfdate.Flight_Time.std(),
+                                    'FT_Skewness': dfdate.Flight_Time.skew(),
+                                    'FT_Kurtosis': dfdate.Flight_Time.kurtosis(), 
+                                    
+                                    'SP_Mean': dfdate.Speed.mean(),
+                                    'SP_STD': dfdate.Speed.std(),
+                                    'SP_Skewness': dfdate.Speed.skew(),
+                                    'SP_Kurtosis': dfdate.Speed.kurtosis(), 
+                                    
+                                    'PFR_Mean': dfdate.Press_Flight_Rate.mean(),
+                                    'PFR_STD': dfdate.Press_Flight_Rate.std(),
+                                    'PFR_Skewness': dfdate.Press_Flight_Rate.skew(),
+                                    'PFR_Kurtosis': dfdate.Press_Flight_Rate.kurtosis(), 
+                                    
+                                    'Sessions': len(dfdate),
                                     'Date': value}
                             df1 = pd.DataFrame([stat])
                             dfall = pd.concat([dfall, df1])
         dfall = dfall.reset_index(drop=True)
-        print(dfall.head(40))
+        os.chdir(dirname)
+        dfall = dfall.round(4)
+        dfall = dfall.fillna(0)
+        dfall.to_csv('dynamics_total_added_' + str(peakdate) + '.csv',
+                     mode='w', index=False,
+                     header=True)
+        # print(dfall.head(10))
                     
 
+def check_nusers():
+    """ Check number of users with statistics in both periods """
+    for s in range(30):
+        p = 0
+        if s < 10:
+            peakdate = '2020-03-0' + str(s)
+        else:
+            peakdate = '2020-03-' + str(s)
+        print(peakdate)
+        os.chdir('/home/jason/Documents/Thesis/azuretry2/iOS')
+        for root, dirs, files in os.walk(os.getcwd(), topdown=False):
+            for f in files:
+                os.chdir(os.path.abspath(root))
+                if f.startswith('statistics_user.csv'):
+                    data = pd.read_csv(f)
+                    df = pd.DataFrame(data)
+                    # df = df[df.Keystrokes > 4]
+                    # userid = \
+                    #     str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                    #     .split('/')[-1]
+                    if not df.empty:
+                        if max(df.Date.values) >= peakdate and \
+                           min(df.Date.values) < peakdate:
+                            p += 1
+
+    print(p)
+
+
+def check_availability():
+    """ Check number of users with no dynamics or emotion """
+    os.chdir('/home/jason/Documents/Thesis/TypingData/iOS')
+    p = 0
+    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
+        for d in dirs:
+            os.chdir(os.path.abspath(root))
+            if not d.endswith('2020') and \
+               not d.endswith('2019'): 
+                # print(os.path.abspath(os.path.join(root, d)))
+                os.chdir(os.path.abspath(os.path.join(root, d)))
+                for rootb, dirsb, filesb in os.walk(os.getcwd(), topdown=True):
+                    # print(filesb)    
+                    if 'statistics_user_info_emotion.csv' not in filesb or \
+                       'dynamics_user.csv' not in filesb:
+                        print(os.getcwd())  
+                        p += 1
+                    break
+    print(p)
 
 # Workflow
 

@@ -185,6 +185,7 @@ def ratio(df, label, labelvalue, periods):
     """ Compute percentage and total of a label in a given time period """
     s = 0
     percentages = []
+    numberall = []
     labels = labelvalue.split('+')
     # print(labels)
     for p in periods:
@@ -193,66 +194,134 @@ def ratio(df, label, labelvalue, periods):
                   for lab in labels]
         # print(totals)
         s += sum(totals)
+        numberall.append(len(df[df.Date == p]))
         # Percentage
         if len(df[df.Date == p]) != 0:
-            percentages.append(sum(totals) / len(df[df.Date == p]))
+            percentages.append((sum(totals)) / len(df[df.Date == p]))
         else: 
             percentages.append(0)
     if percentages[0] == 0 and percentages[1] == 0:
-        ratio = 0
+        # No change in ratio
+        ratio = 1
     elif percentages[0] == 0:
-        # Big value
-        ratio = 5
+        # Added 1 on both num and denum
+        ratio = (percentages[1] + 1 / numberall[1]) / \
+                (percentages[0] + 1 / numberall[0])
     else:
         ratio = percentages[1] / percentages[0]
-    
+   
     return ratio, s
 
 
-def label_distribution_sorted(df, label, labelvalue, device):
+def label_distribution_sorted(df, label, labelvalue, device, k, peakdate):
     """ Plot label distribution for all users sorted 
         using 'statistics_total_added_info.csv' 
-        For multiple labels, separate with '+' """
-    peakdate = '2020-02-28'
+        For multiple labels, separate with '+' 
+        k: offset index for plots"""
+    # peakdate = '2020-02-28'
     df = df.drop_duplicates()
-    df = df[df['Date'] > '2019-12-25']
-    nusers = df.User_PHQ9.nunique()
+    df = df[df['Date'] > '2020-01-14']
     df.loc[(df.Date < peakdate), 'Date'] = 'period1'
     df.loc[(df.Date >= peakdate) & 
            (df.Date != 'period1'), 'Date'] = 'period2'
     periods = ['period1', 'period2']
-    dfall = pd.DataFrame(columns=['Ratio', 'Total'])
-    for value, data in df.groupby('User_PHQ9'):
+    dfall = pd.DataFrame([])
+    for value, data in df.groupby(['UserID', 'User_PHQ9']):
         dfuser = data
         # All periods inside Date values
         if 'period1' in dfuser.Date.values and \
            'period2' in dfuser.Date.values:
             r = round(ratio(dfuser, label, labelvalue, periods)[0], 3)
             totals = ratio(dfuser, label, labelvalue, periods)[1]
-            dfratios = pd.DataFrame({'Ratio': r, 'Total': totals},
-                                    index=[value])
+            dfratios = pd.DataFrame({'User_PHQ9': value[1],
+                                     'Ratio ' + str(labelvalue): r,
+                                     'Total': totals},
+                                    index=[value[0]])
             dfall = pd.concat([dfall, dfratios])
-    dfall.index.rename('User_PHQ9', inplace=True)
+    dfall.index.rename('UserID', inplace=True)
+    # dfall = dfall[dfall.Total > 3]
+    nusers = len(dfall)
     sns.set()
     # print(dfall)
     title = labelvalue + ' ' + label + \
         ' Ratios for all users in 2 time periods\n' + 'Device: ' + device + \
-        ', Number of Users: ' + str(nusers) + '\n' + \
-        'On the left: Total Number of ' + labelvalue + ' ' + label + \
+        ', Number of Users: ' + str(nusers) + ', Peakdate: ' + peakdate + \
+        '\nOn the left: Total Number of ' + labelvalue + ' ' + label + \
         ' occurences.'
     # Aspect ratio of figure png
     w, h = figaspect(3 / 2)
     plt.figure(figsize=(w, h))    
     ax = plt.gca()
-    dfall.Ratio.plot.barh(title=title, ax=ax)
+    # ax.set_xlim(right=4)
+    dfall.sort_values('User_PHQ9').plot.barh(y='Ratio ' + str(labelvalue),
+                                             x='User_PHQ9',
+                                             title=title, ax=ax)
     plt.axvline(x=1, linewidth=2, color='r')
-    for i, v in enumerate(dfall.Total):
-        # print(round(i, 1), round(v, 1))
-        ax.text(-0.7, round(i, 1), str(v), color='blue', fontweight='bold')
-    for i, v in enumerate(dfall.Ratio):
+    for i, v in enumerate(dfall.sort_values('User_PHQ9').Total):
+        ax.text(k, round(i, 1), str(v), color='green', fontweight='bold')
+    for i, v in enumerate(dfall.sort_values('User_PHQ9')['Ratio ' + str(labelvalue)]):
         ax.text(v + 0.1, round(i, 1), str(round(v, 2)), color='blue', fontweight='bold')
+    os.chdir('/home/jason/Documents/Thesis/azuretry2/iOS/DF')
+    dfall.sort_values('User_PHQ9').to_csv('labels_' + str(labelvalue) + '_' +
+                                          str(peakdate) + '.csv', 
+                                          mode='w', index=True, header=True)
     plt.show()
+    # plt.savefig(os.getcwd() + '/' + labelvalue + '.png')
     plt.close()
+
+
+
+def dynamics_sorted(df, variable, device, peakdate, k, t):
+    """ Plot ratios of each dynamics variable feature 
+        between 2 time periods 
+        using dynamics_total_added_PEAKDATE.csv """
+    
+    df = df[['UserID', 'User_PHQ9', variable, 'Sessions', 'Date']]
+    nusers = df.UserID.nunique()
+    dfall = pd.DataFrame([])
+    for value, data in df.groupby(['UserID', 'User_PHQ9']):
+        r = t * abs((data[data.Date == 'period2'][variable].values[0] - 
+                     data[data.Date == 'period1'][variable].values[0])) 
+        s = data[data.Date == 'period2'].Sessions.values[0] + \
+            data[data.Date == 'period1'].Sessions.values[0]
+        dfratios = pd.DataFrame({'User_PHQ9': value[1],
+                                 'Ratio ' + str(variable): round(r, 4), 'Total': s},
+                                index=[value[0]])
+        dfall = pd.concat([dfall, dfratios])
+    dfall.index.rename('UserID', inplace=True)
+    sns.set()
+    title = variable + \
+        ' Absolute difference *' + str(t) + ' of users between 2 time periods\n' + \
+        'Device: ' + device + \
+        ', Number of Users: ' + str(nusers) + '\n' + \
+        'On the left: Total Number of Characters\n' + \
+        'Red vertical line: Median of values = ' \
+        + str(round(dfall['Ratio ' + str(variable)].median(), 3))
+    # Aspect ratio of figure png
+    # w, h = figaspect(3 / 2)
+    # plt.figure(figsize=(w, h))    
+    ax = plt.gca()
+    dfall.sort_values('User_PHQ9').plot.barh(y='Ratio ' + str(variable),
+                                             x='User_PHQ9', width=1, 
+                                             title=title, ax=ax)
+    plt.axvline(x=dfall['Ratio ' + str(variable)].median(), linewidth=2, color='r')
+    for i, v in enumerate(dfall.sort_values('User_PHQ9').Total):
+        # print(round(i, 1), round(v, 1))
+        ax.text(k, i, str(v), color='green', fontweight='bold')
+    for i, v in enumerate(dfall.sort_values('User_PHQ9')['Ratio ' + str(variable)]):
+        # if v < 0:
+        #     k = k * (-1)
+        ax.text(v, i, str(round(v, 2)), color='blue', fontweight='bold', bbox=dict(facecolor='white', alpha=0.5))
+    plt.show()
+    os.chdir('/home/jason/Documents/Thesis/azuretry2/iOS/DF')
+    dfall.sort_values('User_PHQ9').to_csv('dynamics_' + str(variable) + '_' +  
+                                          str(peakdate) + '.csv', 
+                                          mode='w', index=True, header=True)
+    # plt.savefig(os.getcwd() + '/' + variable + '.png')
+    plt.close()
+    # print(dfall.sort_values('User_PHQ9', ascending=False))
+
+
 
 
 def multiline(dirname, device, label, plot, dynamics_variable):

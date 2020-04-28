@@ -4,7 +4,7 @@
 import os 
 import shutil
 
-path = '/home/jason/Documents/Thesis/azuretry1/typingdata/'
+path = '/home/jason/Documents/Thesis/azuretry2/typingdata/'
 os.chdir(path)
 for root, dirs, files in os.walk(os.getcwd(), topdown=True):
     for name in dirs:
