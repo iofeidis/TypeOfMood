@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 # import numpy as np
 from matplotlib.figure import figaspect
+from scipy.stats import spearmanr
 # import csv
 # import patientsfind
 
@@ -380,7 +381,47 @@ def multiline(dirname, device, label, plot, dynamics_variable):
                         df = pd.DataFrame(data)
                         if not df.empty:
                             dynamics_distribution(df, userid, device, dynamics_variable)
-                            
+
+
+def cors_windows():
+    """ Plot correlation heatmaps of users' features and labels """
+    sns.set()
+    os.chdir('/home/jason/Documents/Thesis/azuretry2/iOS')
+    p = 0
+    for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+        for f in files:
+            os.chdir(os.path.abspath(root))
+            if f.startswith('windows_user.csv'):
+                data = pd.read_csv(f)
+                df = pd.DataFrame(data)
+                if len(df.dropna()) > 5:
+                    # print(df.dropna())
+                    p += 1
+                    userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                        .split('/')[-1]
+                    r = []
+                    a = []
+                    for c in df.loc[:, 'HT_Mean':'PFR_Kurtosis'].columns:
+                        a.append(round(spearmanr(df.dropna()[c],
+                                                 df.dropna().Mood)[1], 3))
+                        r.append(round(spearmanr(df.dropna()[c],
+                                                 df.dropna().Mood)[0], 3))
+                    cormat = pd.DataFrame({'Mood': r, 'P-values': a})
+                    cormat = cormat.set_index(df.loc[:, 'HT_Mean':'PFR_Kurtosis'].columns)
+                    # print(cormat)
+                    if max(abs(cormat.Mood.values)) > 0.3:
+                        ax = sns.heatmap(cormat[abs(cormat.Mood) > 
+                                                max(abs(cormat.Mood.values)) - .2],
+                                         annot=True, cmap="YlGnBu")
+                        ax.set_title(userid + '\n Spearman, Sample Length:' + 
+                                     str(len(df.dropna())))
+                        # plt.show()
+                        os.chdir('/home/jason/Documents/Thesis/azuretry2/Plots/Windows')
+                        plt.tight_layout()
+                        plt.savefig(os.getcwd() + '/' + userid + '.png')
+                        plt.close()
+    print(p)
+
 # Workflow
 
 # os.chdir('/home/jason/Documents/Thesis/TypingData/iOS')
