@@ -159,6 +159,7 @@ def windows_users(dirname):
                         break
 
 
+
 def mutual_info():
     """ Compute mutual info between variables and target variable"""
     os.chdir('/home/jason/Documents/Thesis/azuretry2/iOS/DF')

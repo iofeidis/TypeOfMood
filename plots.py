@@ -11,6 +11,7 @@ from matplotlib.figure import figaspect
 from scipy.stats import spearmanr
 # import csv
 # import patientsfind
+sns.set()
 
 
 def clean(df):
@@ -383,8 +384,10 @@ def multiline(dirname, device, label, plot, dynamics_variable):
                             dynamics_distribution(df, userid, device, dynamics_variable)
 
 
-def cors_windows():
-    """ Plot correlation heatmaps of users' features and labels """
+def cors_windows(plot):
+    """ Plot correlation 'heatmap' of users' features and labels 
+        OR
+        'scatterplot' of feature with strongest p-value"""
     sns.set()
     os.chdir('/home/jason/Documents/Thesis/azuretry2/iOS')
     p = 0
@@ -410,17 +413,249 @@ def cors_windows():
                     cormat = cormat.set_index(df.loc[:, 'HT_Mean':'PFR_Kurtosis'].columns)
                     # print(cormat)
                     if max(abs(cormat.Mood.values)) > 0.3:
-                        ax = sns.heatmap(cormat[abs(cormat.Mood) > 
-                                                max(abs(cormat.Mood.values)) - .2],
-                                         annot=True, cmap="YlGnBu")
-                        ax.set_title(userid + '\n Spearman, Sample Length:' + 
-                                     str(len(df.dropna())))
-                        # plt.show()
-                        os.chdir('/home/jason/Documents/Thesis/azuretry2/Plots/Windows')
-                        plt.tight_layout()
-                        plt.savefig(os.getcwd() + '/' + userid + '.png')
+                        if plot == 'heatmap':
+                            ax = sns.heatmap(cormat[abs(cormat.Mood) > 
+                                                    max(abs(cormat.Mood.values)) - .2],
+                                             annot=True, cmap="YlGnBu")
+                            ax.set_title(userid + '\n Spearman, Sample Length:' + 
+                                         str(len(df.dropna())))
+                        elif plot == 'scatterplot':
+                            ax = sns.regplot(
+                                # x=df.dropna()[cormat.idxmin()['P-values']],
+                                x=df.dropna()['FT_Mean'],
+                                y=df.dropna().Mood)
+                            ax.set_title(userid + '\n Spearman, Sample Length:' + 
+                                         str(len(df.dropna())) + ' P-value:' + 
+                                         #  str(cormat['P-values'].min()))
+                                         str(cormat['P-values']['FT_Mean']))
+                        elif plot == 'cormat':
+                            print(userid)
+                            print(cormat)
+            
+                        plt.show()
+                        # os.chdir('/home/jason/Documents/Thesis/azuretry2/Plots/Windows')
+                        # plt.tight_layout()
+                        # plt.savefig(os.getcwd() + '/' + plot + '_' +
+                        #             userid + '.png')
                         plt.close()
-    print(p)
+    print('Number of users with sample length > 5: ', p)
+
+
+def feature_distributions(dirname, feature):
+    """ Plot distribution of keystroke features along different mood labels """
+    os.chdir(dirname)
+    sns.set()
+    for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+        for f in files:
+            os.chdir(os.path.abspath(root))
+            if f.startswith('distributions.csv'):
+                data = pd.read_csv(f)
+                df = pd.DataFrame(data)
+                df = df.round(5)
+                # Keep recent data
+                df = df[df.Date > '2020-01-15']
+                # Dynamics requirements
+                # df = df[df.Mood.notna()]
+                df.Mood = df.Mood.fillna('undefined')
+                df = df[df.Hold_Time < 1]
+                df = df[df.Flight_Time < 3]
+                df = df[df.Speed < 1000]
+                df = df[df.Press_Flight_Rate < 1.5]
+                # df = df[(df.window >= 6) & (df.window < 12)]
+                if not df.empty:
+                    # FacetGrid plot
+                    g = sns.FacetGrid(df, col='Mood', row='period', hue='Date',
+                                      height=4, aspect=.6)
+                    g.map(sns.distplot, feature,
+                          hist=False, rug=True, kde_kws={"shade": True})
+                    userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                        .split('/')[-1]
+                    plt.subplots_adjust(top=.85)
+                    g.fig.suptitle(userid.split('-')[0])
+                    # print(df.describe())
+                    if userid.split('-')[0].startswith('A1D0'):
+                        plt.show()
+                    # if df.Mood.nunique() > 2:
+                    #     os.chdir('/home/jason/Documents/Thesis/azuretry2/Plots/Distributions')
+                    #     plt.savefig(os.getcwd() + '/' + userid + '_' +
+                    #                 feature + '.png')
+                    plt.close()
+
+
+def sessions_feature_plot(dirname, feature, mood):
+    """ Plot evolution of specific feature in time """
+    os.chdir(dirname)
+    sns.set()
+    for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+        for f in files:
+            os.chdir(os.path.abspath(root))
+            if f.startswith('sessions_user.csv'):
+                userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                    .split('/')[-1]
+                print(userid)
+                data = pd.read_csv(f)
+                df = pd.DataFrame(data)
+                df = df[df.Mood == mood]
+                df.Date = pd.to_datetime(df.Date)
+                if not df.empty and len(df) > 5:
+                    df.set_index('Date').sort_index().plot(y=feature)
+                    plt.axvline(x='2020-02-28', linewidth=2, color='g')
+                    plt.show()
+
+
+def boxplots_users(dirname, average, date_or_session):
+    """ Compute BOXPLOTS features 
+        per date or session for users output_user.csv """
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+        for f in files:
+            os.chdir(os.path.abspath(root))
+            if f.startswith('output_user.csv'):
+                data = pd.read_csv(f)
+                df = pd.DataFrame(data)
+                if date_or_session == 'Date':
+                    dfall = pd.DataFrame([])
+                    for a, b in df.groupby('Date'):
+                        if a < '2020-02-28': 
+                            period = 0
+                        else:
+                            period = 1
+                        if average == 'mean':
+                            stat = {        
+                                'HT_Mean': b.HT_Mean.mean(),
+                                'HT_STD': b.HT_STD.mean(),
+                                'HT_Skewness': b.HT_Skewness.mean(),
+                                'HT_Kurtosis': b.HT_Kurtosis.mean(), 
+                                
+                                'FT_Mean': b.FT_Mean.mean(),
+                                'FT_STD': b.FT_STD.mean(),
+                                'FT_Skewness': b.FT_Skewness.mean(),
+                                'FT_Kurtosis': b.FT_Kurtosis.mean(), 
+                                
+                                'SP_Mean': b.SP_Mean.mean(),
+                                'SP_STD': b.SP_STD.mean(),
+                                'SP_Skewness': b.SP_Skewness.mean(),
+                                'SP_Kurtosis': b.SP_Kurtosis.mean(), 
+                                
+                                'PFR_Mean': b.PFR_Mean.mean(),
+                                'PFR_STD': b.PFR_STD.mean(),
+                                'PFR_Skewness': b.PFR_Skewness.mean(),
+                                'PFR_Kurtosis': b.PFR_Kurtosis.mean(), 
+                                
+                                'Sessions': len(b),
+                                'Date': a,
+                                'Period': period,
+                                'Mood': b.Mood.values[0],
+                                'Physical_State': b.Physical_State.values[0]}
+                        elif average == 'median':
+                            stat = {        
+                                'HT_Mean': b.HT_Mean.median(),
+                                'HT_STD': b.HT_STD.median(),
+                                'HT_Skewness': b.HT_Skewness.median(),
+                                'HT_Kurtosis': b.HT_Kurtosis.median(), 
+                                
+                                'FT_Mean': b.FT_Mean.median(),
+                                'FT_STD': b.FT_STD.median(),
+                                'FT_Skewness': b.FT_Skewness.median(),
+                                'FT_Kurtosis': b.FT_Kurtosis.median(), 
+                                
+                                'SP_Mean': b.SP_Mean.median(),
+                                'SP_STD': b.SP_STD.median(),
+                                'SP_Skewness': b.SP_Skewness.median(),
+                                'SP_Kurtosis': b.SP_Kurtosis.median(), 
+                                
+                                'PFR_Mean': b.PFR_Mean.median(),
+                                'PFR_STD': b.PFR_STD.median(),
+                                'PFR_Skewness': b.PFR_Skewness.median(),
+                                'PFR_Kurtosis': b.PFR_Kurtosis.median(), 
+                                
+                                'Sessions': len(b),
+                                'Date': a,
+                                'Period': period,
+                                'Mood': b.Mood.values[0],
+                                'Physical_State': b.Physical_State.values[0]}
+                        dfall = pd.concat([dfall, pd.DataFrame([stat])])
+                    
+
+                    userid = \
+                        str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                        .split('/')[-1]
+                    if dfall.Date.nunique() > 15:
+                        title = userid.split('-')[0] + \
+                            ', Period 0 dates: ' + str(len(dfall[dfall.Period == 0])) + \
+                            ', Period 1 dates: ' + str(len(dfall[dfall.Period == 1]))  
+                        sns.boxplot(y="FT_Mean", x="Mood", hue='Period',
+                                    data=dfall).set_title(title)
+                        sns.stripplot(y="FT_Mean", x="Mood", hue='Period',
+                                      color='0', data=dfall, dodge=True)\
+                            .set_title(title)
+                        plt.show()                
+                        plt.close()
+                elif date_or_session == 'Session':
+                    df['Period'] = df.Date.apply(lambda x: 0 if x < '2020-02-28' else 1)
+                    userid = \
+                        str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                        .split('/')[-1]
+                    if df.Date.nunique() > 15:
+                        title = userid.split('-')[0] + \
+                            ', Period 0 sessions: ' + str(len(df[df.Period == 0])) + \
+                            ', Period 1 sessions: ' + str(len(df[df.Period == 1]))  
+                        sns.boxplot(y="HT_STD", x="Mood", hue='Period',
+                                    data=df, whis=2).set_title(title)
+                        sns.stripplot(y="HT_STD", x="Mood", hue='Period',
+                                      data=df, color='0.5', dodge=True)\
+                            .set_title(title)
+                        plt.show()                
+                        plt.close()
+
+
+def facetgrid_boxplots(dirname):
+    """ Trying combined boxplots on sns facetgrid """
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+        for f in files:
+            os.chdir(os.path.abspath(root))
+            if f.startswith('output_user.csv'):
+                data = pd.read_csv(f)
+                df = pd.DataFrame(data)
+                df['Period'] = df.Date.apply(lambda x: 0 if x < '2020-02-28'
+                                             else 1)
+                userid = \
+                    str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                    .split('/')[-1]
+                if df.Date.nunique() > 15:
+                    title = userid.split('-')[0] + \
+                        ', Period 0 sessions: ' + str(len(df[df.Period == 0])) + \
+                        ', Period 1 sessions: ' + str(len(df[df.Period == 1]))  
+    
+                    fig, axes = plt.subplots(2, 2)
+                    
+                    # Boxplots
+                    sns.boxplot(x="Mood", y="HT_Mean", 
+                                data=df, orient='v', ax=axes[0, 0])
+                    sns.boxplot(x="Mood", y="FT_Mean",
+                                data=df, orient='v', ax=axes[0, 1])
+                    sns.boxplot(x="Mood", y="SP_Mean", 
+                                data=df, orient='v', ax=axes[1, 0])
+                    sns.boxplot(x="Mood", y="PFR_Mean",
+                                data=df, orient='v', ax=axes[1, 1])
+                    
+                    # Stripplots
+                    sns.stripplot(y="HT_Mean", x="Mood", data=df,
+                                  color='0.5', dodge=True, ax=axes[0, 0])
+                    sns.stripplot(y="FT_Mean", x="Mood", data=df,
+                                  color='0.5', dodge=True, ax=axes[0, 1])
+                    sns.stripplot(y="SP_Mean", x="Mood", data=df,
+                                  color='0.5', dodge=True, ax=axes[1, 0])
+                    sns.stripplot(y="PFR_Mean", x="Mood", data=df,
+                                  color='0.5', dodge=True, ax=axes[1, 1])
+
+                    # Title
+                    axes[0, 0].set_title(title)
+
+                    plt.show()                
+                    plt.close()
+
 
 # Workflow
 

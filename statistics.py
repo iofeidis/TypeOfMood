@@ -12,6 +12,7 @@ import pandas as pd
 # import sys
 import os
 import csv
+import plots
 # import matplotlib.pyplot as plt
 
 # Function for extracting typing session data
@@ -262,3 +263,75 @@ def process(csvfile):
 
     df = pd.DataFrame.from_dict([statistics])
     return df
+
+
+def windows_users():
+    """ Compute windows of android users """
+    users = ['bb8b7a0ca31153dc', 'c2f09c480eb6767c',
+             '21142b2ac1cd452a', 'fc6c8aa32e891c3d']
+    windows = [
+        '2020-01-14:2020-01-19', '2020-01-20:2020-01-25',
+        '2020-01-26:2020-01-31', '2020-02-01:2020-02-06',
+        '2020-02-07:2020-02-12', '2020-02-13:2020-02-18',
+        '2020-02-19:2020-02-24', '2020-02-25:2020-03-01',
+        '2020-03-02:2020-03-07', '2020-03-08:2020-03-13',
+        '2020-03-14:2020-03-19', '2020-03-20:2020-03-25',
+        '2020-03-26:2020-03-31', '2020-04-01:2020-04-06',
+        '2020-04-07:2020-04-12', '2020-04-13:2020-04-18'
+    ]
+    for u in users:
+        os.chdir('/home/jason/Documents/Thesis/azuretry2/Android/' + u)
+        for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+            os.chdir(os.path.abspath(root))
+            for f in files:
+                if f.startswith('output_user.csv'):
+                    data = pd.read_csv(f)
+                    df = pd.DataFrame(data)
+                    df = plots.clean(df)
+                    # I need statistics_user to contain features 
+                    # print(df)
+                    df = df.drop(columns=['Delete_Rate', 'Length'])
+                    dfuser = pd.DataFrame([])
+                    for w in windows:
+                        df1 = pd.DataFrame([])
+                        start = w.split(':')[0] 
+                        end = w.split(':')[1]
+                        df1 = df[(df.Date >= start) & (df.Date <= end)]
+                        mood = (len(df1[(df1.Mood == 'Stressed') | 
+                                        (df1.Mood == 'Sad')]) + 5) / \
+                               (len(df1[df1.Mood == 'Happy']) + 5)
+                        physical_state = (len(df1[(df1['Physical_State'] == 'Tiredness') | 
+                                                  (df1['Physical_State'] == 'Sickness')]) + 5) / \
+                                         (len(df1[df1.Mood == 'Relaxation']) + 5)
+                        stat = {
+                            # 'UserID': userid, 'User_PHQ9': userphq9,
+
+                            'HT_Mean': df1.HT_Mean.mean(),
+                            'HT_STD': df1.HT_STD.mean(),
+                            'HT_Skewness': df1.HT_Skewness.mean(),
+                            'HT_Kurtosis': df1.HT_Kurtosis.mean(), 
+                            
+                            'FT_Mean': df1.FT_Mean.mean(),
+                            'FT_STD': df1.FT_STD.mean(),
+                            'FT_Skewness': df1.FT_Skewness.mean(),
+                            'FT_Kurtosis': df1.FT_Kurtosis.mean(), 
+                            
+                            'SP_Mean': df1.SP_Mean.mean(),
+                            'SP_STD': df1.SP_STD.mean(),
+                            'SP_Skewness': df1.SP_Skewness.mean(),
+                            'SP_Kurtosis': df1.SP_Kurtosis.mean(), 
+                            
+                            'PFR_Mean': df1.PFR_Mean.mean(),
+                            'PFR_STD': df1.PFR_STD.mean(),
+                            'PFR_Skewness': df1.PFR_Skewness.mean(),
+                            'PFR_Kurtosis': df1.PFR_Kurtosis.mean(), 
+                            
+                            'Characters': len(df1),
+                            'Mood': mood,
+                            'Physical_State': physical_state,
+                            'Window': w
+                        }
+                        df1 = pd.DataFrame([stat])
+                        dfuser = pd.concat([dfuser, df1])
+                        dfuser.set_index('Window').round(3).to_csv('windows_user.csv', mode='w',
+                                                                   header=True, index=True)

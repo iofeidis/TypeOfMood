@@ -4,10 +4,12 @@
 
 import os
 import pandas as pd
-# import matplotlib.pyplot as plt 
+# import matplotlib.pyplot as plt
+# import seaborn as sns 
 import csv
 import json
 import patientsfind
+# sns.set()
 
 
 
@@ -229,8 +231,8 @@ def statistics_add(dirname):
                 userid = \
                     str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
                     .split('/')[-1]
-                df1 = pd.DataFrame([{'UserID': userid}])
-                df = pd.concat([df1, df], axis=1).fillna(method='ffill')
+                b = pd.DataFrame([{'UserID': userid}])
+                df = pd.concat([b, df], axis=1).fillna(method='ffill')
                 os.chdir(dirname)
                 # Open .csv file and append total statistics
                 # Needed for header 
@@ -552,8 +554,8 @@ def dynamics_total(dirname, device, peakdate):
                                     
                                     'Sessions': len(dfdate),
                                     'Date': value}
-                            df1 = pd.DataFrame([stat])
-                            dfall = pd.concat([dfall, df1])
+                            b = pd.DataFrame([stat])
+                            dfall = pd.concat([dfall, b])
         dfall = dfall.reset_index(drop=True)
         os.chdir(dirname)
         dfall = dfall.round(4)
@@ -611,6 +613,105 @@ def check_availability():
                         p += 1
                     break
     print(p)
+
+
+def distrib(dirname):
+    """ Create distrib.csv of users 
+        by merging dynamics + statistics """
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
+        for d in dirs:
+            os.chdir(os.path.abspath(root))
+            if not d.endswith('2020') and \
+               not d.endswith('2019'):
+                # print(os.path.abspath(os.path.join(root, d)))
+                os.chdir(os.path.abspath(os.path.join(root, d)))
+                for rootb, dirsb, filesb in os.walk(os.getcwd(), topdown=True):
+                    # print(filesb)    
+                    if 'statistics_user.csv' in filesb and \
+                       'dynamics_user.csv' in filesb:
+                        userid = \
+                            str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                            .split('/')[-1]
+                        print(userid)
+                        data = pd.read_csv('dynamics_user.csv')
+                        dyn = pd.DataFrame(data)
+                        data = pd.read_csv('statistics_user.csv')
+                        stat = pd.DataFrame(data)
+                        dyn = dyn[dyn.Hold_Time.notna()]
+                        stat = stat.drop(columns='Keystrokes').drop_duplicates()
+                        h = pd.merge(dyn, stat, how='left', on='Date')
+                        h.to_csv('distributions.csv', mode='w', index=False,
+                                 header=True)
+                    break
+
+
+def sessions_features(dirname):
+    """ Compute dynamics features per session per user 
+        by using distributions.csv 
+        Just a groupby('Date') in distributions.csv """
+    os.chdir(dirname)
+    for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+        for f in files:
+            os.chdir(os.path.abspath(root))
+            if f.startswith('distributions.csv'):
+                data = pd.read_csv(f)
+                df = pd.DataFrame(data)
+                df = df.round(5)
+                df.Mood = df.Mood.fillna('undefined')
+                df.Physical_State = df.Physical_State.fillna('undefined')
+                df = df[df.Hold_Time < 1]
+                df = df[df.Flight_Time < 3]
+                df = df[df.Speed < 1000]
+                df = df[df.Press_Flight_Rate < 1.5]
+                dfall = pd.DataFrame([])
+                for a, b in df.groupby('Date'):
+                    dfs = pd.DataFrame([])
+                    if len(b) > 10:
+
+                        stat = {
+                            # 'UserID': userid, 'User_PHQ9': userphq9,
+
+                            'HT_Mean': b.Hold_Time.mean(),
+                            'HT_STD': b.Hold_Time.std(),
+                            'HT_Skewness': b.Hold_Time.skew(),
+                            'HT_Kurtosis': b.Hold_Time.kurtosis(), 
+                            
+                            'FT_Mean': b.Flight_Time.mean(),
+                            'FT_STD': b.Flight_Time.std(),
+                            'FT_Skewness': b.Flight_Time.skew(),
+                            'FT_Kurtosis': b.Flight_Time.kurtosis(), 
+                            
+                            'SP_Mean': b.Speed.mean(),
+                            'SP_STD': b.Speed.std(),
+                            'SP_Skewness': b.Speed.skew(),
+                            'SP_Kurtosis': b.Speed.kurtosis(), 
+                            
+                            'PFR_Mean': b.Press_Flight_Rate.mean(),
+                            'PFR_STD': b.Press_Flight_Rate.std(),
+                            'PFR_Skewness': b.Press_Flight_Rate.skew(),
+                            'PFR_Kurtosis': b.Press_Flight_Rate.kurtosis(), 
+                            
+                            'Characters': len(b),
+                            'Mood': b.Mood.values[0],
+                            'Physical_State': b.Physical_State.values[0],
+                            'Date': a,
+                            'Window': b.window.values[0],
+                            'Period': b.period.values[0]
+                        }
+                        dfs = pd.DataFrame([stat])
+
+                        dfall = pd.concat([dfall, dfs])
+                if not dfall.empty:
+                    dfall = dfall.round(5).to_csv('sessions_user.csv', mode='w',
+                                                  index=False, header=True)
+                # print(dfall)
+                # for a, b in dfall.groupby('Mood'):
+                #     print(a)
+                #     print(b)
+
+
+
 
 # Workflow
 

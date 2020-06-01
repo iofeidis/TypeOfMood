@@ -78,8 +78,8 @@ def keystrokes(jsonFile):
         # 0 < hold time < 300 ms (0.3 sec)
         tempft = datadown[p + 1] - dataup[p]
         tempht = dataup[p] - datadown[p]
-        if tempft > 0 and tempft < 3000 and\
-           tempht > 0 and tempht < 300 and\
+        if tempft > 0 and tempft < 3 and\
+           tempht > 0 and tempht < .3 and\
            (not islongpress[p]):
             ft.append(tempft)
             ht.append(tempht)
@@ -102,10 +102,10 @@ def keystrokes(jsonFile):
         pfr.append(ht[p] / ft[p])
     
     # dr: Delete Rate
-    if length > 0:
-        dr = (datasession['backSpaceCounter']) / length
-    else:
-        dr = 0
+    # if length > 0:
+    #     dr = (datasession['backSpaceCounter']) / length
+    # else:
+    #     dr = 0
     # Duration of Session (in sec)
     # duration = datasession['sessionTime']
 
@@ -136,7 +136,7 @@ def keystrokes(jsonFile):
     ftseries = pd.Series(ft)
     spseries = pd.Series(sp)
     pfrseries = pd.Series(pfr)
-    pvseries = pd.Series(pv)
+    # pvseries = pd.Series(pv)
 
     # Is not used in analysis
     # Mean of each Series
@@ -144,49 +144,55 @@ def keystrokes(jsonFile):
     ftmean = ftseries.mean()
     spmean = spseries.mean()
     pfrmean = pfrseries.mean()
-    pvmean = pvseries.mean()
+    # pvmean = pvseries.mean()
 
     # Median of each Series
-    htmedian = htseries.median()
-    ftmedian = ftseries.median()
-    spmedian = spseries.median()
-    pfrmedian = pfrseries.median()
-    pvmedian = pvseries.median()
+    # htmedian = htseries.median()
+    # ftmedian = ftseries.median()
+    # spmedian = spseries.median()
+    # pfrmedian = pfrseries.median()
+    # pvmedian = pvseries.median()
 
     # Standard Deviation of each Series
     htstd = htseries.std()
     ftstd = ftseries.std()
     spstd = spseries.std()
     pfrstd = pfrseries.std()
-    pvstd = pvseries.std()
+    # pvstd = pvseries.std()
 
     # Skewness of each Series
     htskew = htseries.skew()
     ftskew = ftseries.skew()
     spskew = spseries.skew()
     pfrskew = pfrseries.skew()
-    pvskew = pvseries.skew()
+    # pvskew = pvseries.skew()
 
     # Kurtosis of each Series
     htkurtosis = htseries.kurtosis()
     ftkurtosis = ftseries.kurtosis()
     spkurtosis = spseries.kurtosis()
     pfrkurtosis = pfrseries.kurtosis()
-    pvkurtosis = pvseries.kurtosis()
+    # pvkurtosis = pvseries.kurtosis()
 
+    # Date
+    tmp = str((os.path.basename(os.getcwd())))
+    try1 = tmp.split('.')
+    date = try1[2] + '-' + try1[1] + '-' + try1[0]
     
-    stat = {'HT_Mean': htmean, 'HT_Median': htmedian, 'HT_STD': htstd,
+    stat = {'HT_Mean': htmean, 'HT_STD': htstd,
             'HT_Skewness': htskew, 'HT_Kurtosis': htkurtosis,
-            'FT_Mean': ftmean, 'FT_Median': ftmedian, 'FT_STD': ftstd,
+            'FT_Mean': ftmean, 'FT_STD': ftstd,
             'FT_Skewness': ftskew, 'FT_Kurtosis': ftkurtosis,
-            'SP_Mean': spmean, 'SP_Median': spmedian, 'SP_STD': spstd,
+            'SP_Mean': spmean, 'SP_STD': spstd,
             'SP_Skewness': spskew, 'SP_Kurtosis': spkurtosis,
-            'PFR_Mean': pfrmean, 'PFR_Median': pfrmedian, 'PFR_STD': pfrstd,
+            'PFR_Mean': pfrmean, 'PFR_STD': pfrstd,
             'PFR_Skewness': pfrskew, 'PFR_Kurtosis': pfrkurtosis,
-            'PV_Mean': pvmean, 'PV_Median': pvmedian, 'PV_STD': pvstd,
-            'PV_Skewness': pvskew, 'PV_Kurtosis': pvkurtosis,
+            # 'PV_Mean': pvmean, 'PV_Median': pvmedian, 'PV_STD': pvstd,
+            # 'PV_Skewness': pvskew, 'PV_Kurtosis': pvkurtosis,
             # 'Duration': duration,
-            'Delete_Rate': dr, 'Length': length}
+            # 'Delete_Rate': dr, 
+            'Length': length,
+            'Date': date}
 
     return stat
 
@@ -297,16 +303,18 @@ def filesextract(dirname):
             os.chdir(os.path.abspath(root))
             if filename.endswith('output.csv'):
                 data = pd.read_csv(filename)
-                fieldnames = ['HT_Mean', 'HT_Median', 'HT_STD', 'HT_Skewness',
-                              'HT_Kurtosis', 'FT_Mean', 'FT_Median', 'FT_STD',
+                fieldnames = ['HT_Mean', 'HT_STD', 'HT_Skewness',
+                              'HT_Kurtosis', 'FT_Mean', 'FT_STD',
                               'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
-                              'SP_Median', 'SP_STD', 'SP_Skewness',
-                              'SP_Kurtosis', 'PFR_Mean', 'PFR_Median',
+                              'SP_STD', 'SP_Skewness',
+                              'SP_Kurtosis', 'PFR_Mean',
                               'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
-                              'PV_Mean', 'PV_Median', 'PV_STD', 'PV_Skewness',
-                              'PV_Kurtosis',
+                              # 'PV_Mean', 'PV_Median', 'PV_STD', 'PV_Skewness',
+                              # 'PV_Kurtosis',
                               # 'Duration',
-                              'Delete_Rate', 'Length']
+                              # 'Delete_Rate', 
+                              'Length',
+                              'Date']
                 dfstat = pd.DataFrame(data)
                 pathstat = os.path.abspath(root)
                 flagstat = True
@@ -331,17 +339,19 @@ def filesextract(dirname):
                     # Needed for header 
                     file_exists = os.path.isfile('./output_user.csv')
                     with open('output_user.csv', 'a', newline='') as csvfile:
-                        fieldnames = ['HT_Mean', 'HT_Median', 'HT_STD',
+                        fieldnames = ['HT_Mean', 'HT_STD',
                                       'HT_Skewness', 'HT_Kurtosis', 'FT_Mean',
-                                      'FT_Median', 'FT_STD',
+                                      'FT_STD',
                                       'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
-                                      'SP_Median', 'SP_STD', 'SP_Skewness',
-                                      'SP_Kurtosis', 'PFR_Mean', 'PFR_Median',
+                                      'SP_STD', 'SP_Skewness',
+                                      'SP_Kurtosis', 'PFR_Mean',
                                       'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
-                                      'PV_Mean', 'PV_Median', 'PV_STD',
-                                      'PV_Skewness', 'PV_Kurtosis',
+                                      # 'PV_Mean', 'PV_Median', 'PV_STD',
+                                      # 'PV_Skewness', 'PV_Kurtosis',
                                       # 'Duration',
-                                      'Delete_Rate', 'Length',
+                                      # 'Delete_Rate', 
+                                      'Length', 
+                                      'Date',
                                       'Mood', 'Physical_State']
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:
@@ -410,19 +420,21 @@ def users(dirname):
                     with open('output_total.csv', 'a', newline='') as csvfile:
                         fieldnames = ['UserID', 'User_PHQ9',
                                       # 'User_Age', 'User_Gender',
-                                      'HT_Mean', 'HT_Median', 'HT_STD',
+                                      'HT_Mean', 'HT_STD',
                                       'HT_Skewness',
-                                      'HT_Kurtosis', 'FT_Mean', 'FT_Median',
+                                      'HT_Kurtosis', 'FT_Mean',
                                       'FT_STD',
                                       'FT_Skewness', 'FT_Kurtosis', 'SP_Mean',
-                                      'SP_Median', 'SP_STD', 'SP_Skewness',
-                                      'SP_Kurtosis', 'PFR_Mean', 'PFR_Median',
+                                      'SP_STD', 'SP_Skewness',
+                                      'SP_Kurtosis', 'PFR_Mean',
                                       'PFR_STD', 'PFR_Skewness', 'PFR_Kurtosis',
-                                      'PV_Mean', 'PV_Median', 'PV_STD',
-                                      'PV_Skewness',
-                                      'PV_Kurtosis',
+                                      # 'PV_Mean', 'PV_Median', 'PV_STD',
+                                      # 'PV_Skewness',
+                                      # 'PV_Kurtosis',
                                       # 'Duration',
-                                      'Delete_Rate', 'Length',
+                                      # 'Delete_Rate', 
+                                      'Length', 
+                                      'Date',
                                       'Mood', 'Physical_State']        
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:

@@ -57,6 +57,10 @@ def extract(jsonFile):
     # usergender = data['USER_GENDER']
     # UserPhq9
     userphq9 = data['USER_PHQ9']
+    # Date of Session
+    date = data['DATE_DATA']
+    # Format: Y-M-d
+    date = date.split(',')[0]
 
     # ht: HoldTime, ft: FlightTime
     # sp: Speed, pfr: Press-Flight-Rate
@@ -178,7 +182,8 @@ def extract(jsonFile):
                  # 'Duration': duration,
                  'Delete_Rate': dr,
                  'Length': length,
-                 'Mood': mood, 'Physical_State': physicalstate}
+                 'Mood': mood, 'Physical_State': physicalstate,
+                 'Date': date}
 
     # Open .csv file and append variables
     file_exists = os.path.isfile('./output.csv')
@@ -251,7 +256,7 @@ def filesextract(dirname):
                                   # 'Duration',
                                   'Delete_Rate',
                                   'Length',
-                                  'Mood', 'Physical_State']
+                                  'Mood', 'Physical_State', 'Date']
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
@@ -309,7 +314,7 @@ def users(dirname):
                                   # 'Duration',
                                   'Delete_Rate',
                                   'Length',
-                                  'Mood', 'Physical_State']        
+                                  'Mood', 'Physical_State', 'Date']        
                     writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     if not file_exists:
                         writer.writeheader()
