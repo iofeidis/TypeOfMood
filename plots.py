@@ -6,11 +6,9 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt 
 import seaborn as sns
-# import numpy as np
 from matplotlib.figure import figaspect
 from scipy.stats import spearmanr
-# import csv
-# import patientsfind
+
 sns.set()
 
 
@@ -35,9 +33,9 @@ def clean(df):
 
 def evol(df, name, device, label):
     """ Plotting the evolution of Mood labels in time
-        Just change label and device variables"""
-    # label = 'Mood'
-    # device = 'iOS'
+        Just change label and device variables
+        label = 'Mood'
+        device = 'iOS' """
     # Clean df from undefined, Postponing, TIMEOUT values
     df = clean(df)
     # Keep only sessions with NumberOfKeystrokes > 5
@@ -70,10 +68,6 @@ def evol(df, name, device, label):
                 df.plot(linewidth=4, title=title)
                 plt.axvline(x='2020-01-25', linewidth=2, color='r')
                 plt.axvline(x='2020-02-28', linewidth=2, color='g')
-        # plt.gcf()
-        # os.chdir('/home/jason/Documents/Thesis/TypingData/' + device + '/Plots')
-        # plt.savefig(os.getcwd() + '/' + name + '.png')
-        # plt.show()
         plt.close()
 
 
@@ -90,7 +84,6 @@ def label_distribution(df, name, device, label):
         userphq9 = df['User_PHQ9'][0]
     else:
         userphq9 = 'empty'
-    # print(df)
     peakdate = '2020-02-28'
     # Keep only recent sessions
     df = df[df['Date'] > '2019-12-25']
@@ -99,29 +92,14 @@ def label_distribution(df, name, device, label):
     df.loc[(df.Date >= peakdate) & 
            (df.Date != 'period1'), 'Date'] = 'period2'
     df = df.sort_values(by=['Date'])
-
-    # if device == 'iOS':
-    #     for root, dirs, files in os.walk(os.getcwd(), topdown=True):
-    #         for filename in files:
-    #             if filename.startswith('Info.json'):
-    #                 info = patientsfind.info(filename)
-    #                 userphq9 = str(info['User_PHQ9'])
-    #                 break
-    #         break
-        
-
     userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
         .split('/')[-1]
     title = 'UserID: ' + userid + ',\n User_PHQ9: ' + str(userphq9) + \
             ', Device: ' + device
     if not df.empty:
         if (df.Date.nunique() > 1):
-            # print(len(df))
             df.groupby(label).Date.value_counts().unstack(1).plot.barh(title=title)
-            # plt.set_xlim(0, 10)
             plt.gcf()
-            # os.chdir('/home/jason/Documents/Thesis/TypingData/' + device + '/Plots')
-            # plt.savefig(os.getcwd() + '/' + name + label + '.png')
             plt.show()
             plt.close()
 
@@ -153,28 +131,22 @@ def dynamics_distribution(df, name, device, dynamics_variable):
     # Keep only users with all 3 periods
     if not df.empty and ('period1' in df.Date.values) and \
                         ('period2' in df.Date.values):
-        # fig, axs = plt.subplots(2, 1)
         sns.set() 
-        # df.Hold_Time.hist(by=df.Date)
         os.chdir('/home/jason/Documents/Thesis/TypingData/' + device + '/Plots')
         if dynamics_variable == 'Hold_Time':
             sns.violinplot(y=df.Date, x=df.Hold_Time, bw=.2).set_title(title)
-            # plt.savefig(os.getcwd() + '/' + name + '_ht.png')
             plt.show()
             plt.close()
         elif dynamics_variable == 'Flight_Time':
             sns.violinplot(y=df.Date, x=df.Flight_Time, bw=.2).set_title(title)
-            # plt.savefig(os.getcwd() + '/' + name + '_ft.png')
             plt.show()
             plt.close()
         elif dynamics_variable == 'Speed':
             sns.violinplot(y=df.Date, x=df.Speed, bw=.2).set_title(title)
-            # plt.savefig(os.getcwd() + '/' + name + '_sp.png')
             plt.show()
             plt.close()
         elif dynamics_variable == 'Press_Flight_Rate':
             sns.violinplot(y=df.Date, x=df.Press_Flight_Rate, bw=.2).set_title(title)
-            # plt.savefig(os.getcwd() + '/' + name + '_pfr.png')
             plt.show()
             plt.close()
         else:
@@ -189,12 +161,10 @@ def ratio(df, label, labelvalue, periods):
     percentages = []
     numberall = []
     labels = labelvalue.split('+')
-    # print(labels)
     for p in periods:
         # Total
         totals = [len(df[(df[label] == lab) & (df.Date == p)]) 
                   for lab in labels]
-        # print(totals)
         s += sum(totals)
         numberall.append(len(df[df.Date == p]))
         # Percentage
@@ -220,7 +190,6 @@ def label_distribution_sorted(df, label, labelvalue, device, k, peakdate):
         using 'statistics_total_added_info.csv' 
         For multiple labels, separate with '+' 
         k: offset index for plots"""
-    # peakdate = '2020-02-28'
     df = df.drop_duplicates()
     df = df[df['Date'] > '2020-01-14']
     df.loc[(df.Date < peakdate), 'Date'] = 'period1'
@@ -241,10 +210,8 @@ def label_distribution_sorted(df, label, labelvalue, device, k, peakdate):
                                     index=[value[0]])
             dfall = pd.concat([dfall, dfratios])
     dfall.index.rename('UserID', inplace=True)
-    # dfall = dfall[dfall.Total > 3]
     nusers = len(dfall)
     sns.set()
-    # print(dfall)
     title = labelvalue + ' ' + label + \
         ' Ratios for all users in 2 time periods\n' + 'Device: ' + device + \
         ', Number of Users: ' + str(nusers) + ', Peakdate: ' + peakdate + \
@@ -254,7 +221,6 @@ def label_distribution_sorted(df, label, labelvalue, device, k, peakdate):
     w, h = figaspect(3 / 2)
     plt.figure(figsize=(w, h))    
     ax = plt.gca()
-    # ax.set_xlim(right=4)
     dfall.sort_values('User_PHQ9').plot.barh(y='Ratio ' + str(labelvalue),
                                              x='User_PHQ9',
                                              title=title, ax=ax)
@@ -268,7 +234,6 @@ def label_distribution_sorted(df, label, labelvalue, device, k, peakdate):
                                           str(peakdate) + '.csv', 
                                           mode='w', index=True, header=True)
     plt.show()
-    # plt.savefig(os.getcwd() + '/' + labelvalue + '.png')
     plt.close()
 
 
@@ -300,29 +265,22 @@ def dynamics_sorted(df, variable, device, peakdate, k, t):
         'Red vertical line: Median of values = ' \
         + str(round(dfall['Ratio ' + str(variable)].median(), 3))
     # Aspect ratio of figure png
-    # w, h = figaspect(3 / 2)
-    # plt.figure(figsize=(w, h))    
     ax = plt.gca()
     dfall.sort_values('User_PHQ9').plot.barh(y='Ratio ' + str(variable),
                                              x='User_PHQ9', width=1, 
                                              title=title, ax=ax)
     plt.axvline(x=dfall['Ratio ' + str(variable)].median(), linewidth=2, color='r')
     for i, v in enumerate(dfall.sort_values('User_PHQ9').Total):
-        # print(round(i, 1), round(v, 1))
         ax.text(k, i, str(v), color='green', fontweight='bold')
     for i, v in enumerate(dfall.sort_values('User_PHQ9')['Ratio ' + str(variable)]):
-        # if v < 0:
-        #     k = k * (-1)
         ax.text(v, i, str(round(v, 2)), color='blue', fontweight='bold', bbox=dict(facecolor='white', alpha=0.5))
     plt.show()
     os.chdir('/home/jason/Documents/Thesis/azuretry2/iOS/DF')
     dfall.sort_values('User_PHQ9').to_csv('dynamics_' + str(variable) + '_' +  
                                           str(peakdate) + '.csv', 
                                           mode='w', index=True, header=True)
-    # plt.savefig(os.getcwd() + '/' + variable + '.png')
     plt.close()
-    # print(dfall.sort_values('User_PHQ9', ascending=False))
-
+    
 
 
 
@@ -398,7 +356,6 @@ def cors_windows(plot):
                 data = pd.read_csv(f)
                 df = pd.DataFrame(data)
                 if len(df.dropna()) > 5:
-                    # print(df.dropna())
                     p += 1
                     userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
                         .split('/')[-1]
@@ -411,7 +368,6 @@ def cors_windows(plot):
                                                  df.dropna().Mood)[0], 3))
                     cormat = pd.DataFrame({'Mood': r, 'P-values': a})
                     cormat = cormat.set_index(df.loc[:, 'HT_Mean':'PFR_Kurtosis'].columns)
-                    # print(cormat)
                     if max(abs(cormat.Mood.values)) > 0.3:
                         if plot == 'heatmap':
                             ax = sns.heatmap(cormat[abs(cormat.Mood) > 
@@ -421,22 +377,16 @@ def cors_windows(plot):
                                          str(len(df.dropna())))
                         elif plot == 'scatterplot':
                             ax = sns.regplot(
-                                # x=df.dropna()[cormat.idxmin()['P-values']],
                                 x=df.dropna()['FT_Mean'],
                                 y=df.dropna().Mood)
                             ax.set_title(userid + '\n Spearman, Sample Length:' + 
                                          str(len(df.dropna())) + ' P-value:' + 
-                                         #  str(cormat['P-values'].min()))
                                          str(cormat['P-values']['FT_Mean']))
                         elif plot == 'cormat':
                             print(userid)
                             print(cormat)
             
                         plt.show()
-                        # os.chdir('/home/jason/Documents/Thesis/azuretry2/Plots/Windows')
-                        # plt.tight_layout()
-                        # plt.savefig(os.getcwd() + '/' + plot + '_' +
-                        #             userid + '.png')
                         plt.close()
     print('Number of users with sample length > 5: ', p)
 
@@ -473,13 +423,10 @@ def feature_distributions(dirname, feature):
                     plt.subplots_adjust(top=.85)
                     g.fig.suptitle(userid.split('-')[0])
                     # print(df.describe())
-                    if userid.split('-')[0].startswith('A1D0'):
+                    plt.show()
+                    if df.Mood.nunique() > 2:
                         plt.show()
-                    # if df.Mood.nunique() > 2:
-                    #     os.chdir('/home/jason/Documents/Thesis/azuretry2/Plots/Distributions')
-                    #     plt.savefig(os.getcwd() + '/' + userid + '_' +
-                    #                 feature + '.png')
-                    plt.close()
+                        plt.close()
 
 
 def sessions_feature_plot(dirname, feature, mood):
@@ -609,8 +556,10 @@ def boxplots_users(dirname, average, date_or_session):
                         plt.close()
 
 
-def facetgrid_boxplots(dirname):
-    """ Trying combined boxplots on sns facetgrid """
+def facetgrid_boxplots(dirname, label):
+    """ Trying combined boxplots on sns facetgrid 
+        Insert label = Mood for all labels compared OR
+               label = Stressed, etc for specific label comparison"""
     os.chdir(dirname)
     for root, dirs, files in os.walk(os.getcwd(), topdown=True):
         for f in files:
@@ -618,36 +567,45 @@ def facetgrid_boxplots(dirname):
             if f.startswith('output_user.csv'):
                 data = pd.read_csv(f)
                 df = pd.DataFrame(data)
+                # df = df[df.Mood != 'Neutral']
                 df['Period'] = df.Date.apply(lambda x: 0 if x < '2020-02-28'
                                              else 1)
                 userid = \
                     str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
                     .split('/')[-1]
-                if df.Date.nunique() > 15:
+                # if len(df[df.Mood == label]) > 50:
+                if len(df) > 50:
                     title = userid.split('-')[0] + \
                         ', Period 0 sessions: ' + str(len(df[df.Period == 0])) + \
                         ', Period 1 sessions: ' + str(len(df[df.Period == 1]))  
     
+                    if label != 'Mood':
+                        k = 'Label'
+                        df['Label'] = df.Mood.apply(lambda x: label if 
+                                                    x == label else 'Not ' + label)
+                    else:
+                        k = 'Mood'
+                    
                     fig, axes = plt.subplots(2, 2)
                     
                     # Boxplots
-                    sns.boxplot(x="Mood", y="HT_Mean", 
-                                data=df, orient='v', ax=axes[0, 0])
-                    sns.boxplot(x="Mood", y="FT_Mean",
-                                data=df, orient='v', ax=axes[0, 1])
-                    sns.boxplot(x="Mood", y="SP_Mean", 
-                                data=df, orient='v', ax=axes[1, 0])
-                    sns.boxplot(x="Mood", y="PFR_Mean",
-                                data=df, orient='v', ax=axes[1, 1])
+                    sns.boxplot(x=k, y="HT_Mean", hue='Period',
+                                data=df, orient='v', ax=axes[0, 0], showfliers=False)
+                    sns.boxplot(x=k, y="FT_Mean", hue='Period',
+                                data=df, orient='v', ax=axes[0, 1], showfliers=False)
+                    sns.boxplot(x=k, y="SP_Mean", hue='Period', 
+                                data=df, orient='v', ax=axes[1, 0], showfliers=False)
+                    sns.boxplot(x=k, y="PFR_Mean", hue='Period',
+                                data=df, orient='v', ax=axes[1, 1], showfliers=False)
                     
                     # Stripplots
-                    sns.stripplot(y="HT_Mean", x="Mood", data=df,
+                    sns.stripplot(y="HT_Mean", x=k, data=df, hue='Period',
                                   color='0.5', dodge=True, ax=axes[0, 0])
-                    sns.stripplot(y="FT_Mean", x="Mood", data=df,
+                    sns.stripplot(y="FT_Mean", x=k, data=df, hue='Period',
                                   color='0.5', dodge=True, ax=axes[0, 1])
-                    sns.stripplot(y="SP_Mean", x="Mood", data=df,
+                    sns.stripplot(y="SP_Mean", x=k, data=df, hue='Period',
                                   color='0.5', dodge=True, ax=axes[1, 0])
-                    sns.stripplot(y="PFR_Mean", x="Mood", data=df,
+                    sns.stripplot(y="PFR_Mean", x=k, data=df, hue='Period',
                                   color='0.5', dodge=True, ax=axes[1, 1])
 
                     # Title
@@ -655,23 +613,3 @@ def facetgrid_boxplots(dirname):
 
                     plt.show()                
                     plt.close()
-
-
-# Workflow
-
-# os.chdir('/home/jason/Documents/Thesis/TypingData/iOS')
-# os.chdir('/home/jason/Documents/Thesis/TypingData/Android')
-# dirname = os.getcwd()
-# os.chdir(dirname)
-
-# multiline(os.getcwd(), 'Android', 'Mood')
-
-# stat_without_keystrokes(os.path.abspath(dirname))
-# emotion(os.getcwd())
-# emotions_total_android(os.getcwd())
-# emotions_total_ios(os.getcwd())
-
-# stat_without_emotion(os.path.abspath(dirname))
-# sessions(os.getcwd())
-# sessions_total_android(os.getcwd())
-# sessions_total_ios(os.getcwd())

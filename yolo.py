@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import plots
     
 
 # os.chdir('/home/jason/Documents/Thesis/azuretry2/Android')
@@ -60,32 +61,25 @@ import seaborn as sns
 #             df['window'] = df.Date.apply(windows)
 #             df.to_csv(f, mode='w', header=True, index=False)
 
-os.chdir('/home/jason/Documents/Thesis/azuretry2/iOS')
-p = 0
-dfall = pd.DataFrame([])
-for root, dirs, files in os.walk(os.getcwd(), topdown=False):
-    for filename in files:
-        os.chdir(os.path.abspath(root))
-        if filename.endswith('sessions_user.csv'):
-            data = pd.read_csv(filename)
-            df = pd.DataFrame(data)
-            stressed = len(df[df.Mood == 'Stressed'])
-            sad = len(df[df.Mood == 'Sad'])
-            happy = len(df[df.Mood == 'Happy'])
-            undefined = len(df[df.Mood == 'undefined'])
-            neutral = len(df[df.Mood == 'Neutral'])
-            percentage = len(df[df.Date > '2020-02-28']) / len(df)
-            userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
-                .split('/')[-1]
-            # print(userid)
-            # print('Stressed: ' + str(stressed))
-            # print('Sad: ' + str(sad))
-            # print('Happy: ' + str(happy))
-            # print('undefined: ' + str(undefined))
-            # print('Neutral: ' + str(neutral))
-            stat = {'UserID': userid, 'Happy': happy, 'Stressed': stressed,
-                    'Sad': sad, 'undefined': undefined, 'Neutral': neutral,
-                    'Period_Percentage': percentage}
-            dfall = pd.concat([dfall, pd.DataFrame([stat])])
-            p += 1
-print(dfall.set_index('UserID').sort_values('Happy', ascending=False).round(2))
+
+# os.chdir('/home/jason/Documents/Thesis/azuretry2/Android')
+# for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+#     for f in files:
+#         os.chdir(os.path.abspath(root))
+#         if f.startswith('output_user.csv'):
+#             data = pd.read_csv(f)
+#             df = pd.DataFrame(data)
+#             df = plots.clean(df)
+#             df = df.round(4)
+#             df.to_csv(f, mode='w', header=True, index=False)
+
+# os.chdir('/home/jason/Documents/Thesis/azuretry3/iOS')
+# for root, dirs, files in os.walk(os.getcwd(), topdown=True):
+#     for f in files:
+#         os.chdir(os.path.abspath(root))
+#         if f.startswith('output_total.csv'):
+#             data = pd.read_csv(f)
+#             df = pd.DataFrame(data)
+#             df.User_PHQ9 = df.User_PHQ9.fillna(method='ffill')
+#             df.to_csv(f, mode='w', header=True, index=False)
+

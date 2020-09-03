@@ -333,8 +333,8 @@ def filesextract(dirname):
                     os.chdir(dirname)
                     df = pd.concat([dfstat, dfemotion], axis=1)
                     # Propagation to fill empty emotions
-                    df = df.fillna(method='ffill')
-
+                    df.Mood = df.Mood.fillna(method='ffill')
+                    df.Physical_State = df.Physical_State.fillna(method='ffill')
                     # Open .csv file and append statistics
                     # Needed for header 
                     file_exists = os.path.isfile('./output_user.csv')
@@ -356,6 +356,7 @@ def filesextract(dirname):
                         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
                         if not file_exists:
                             writer.writeheader()
+                    df = df[df['Length'] > 5].reset_index(drop=True)    
                     df.to_csv('output_user.csv', mode='a', index=False,
                               header=False)
 
@@ -416,7 +417,7 @@ def users(dirname):
                     file_exists = os.path.isfile('./output_total.csv')
                     df = pd.concat([dfinfo, dfstat], axis=1)
                     # Propagation to fill empty emotions
-                    df = df.fillna(method='ffill')
+                    df.UserID = df.UserID.fillna(method='ffill')
                     with open('output_total.csv', 'a', newline='') as csvfile:
                         fieldnames = ['UserID', 'User_PHQ9',
                                       # 'User_Age', 'User_Gender',
@@ -464,6 +465,7 @@ def process(csvfile):
     df = df.round(4)
     # Keep only users with number of sessions > 10
     if len(df) < 10:
+        # It's an empty df with just columns
         df = pd.DataFrame(columns=df.columns)
     # print(df)
     return df

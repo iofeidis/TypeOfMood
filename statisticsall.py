@@ -711,6 +711,50 @@ def sessions_features(dirname):
                 #     print(b)
 
 
+def statisticsdates(dirname):
+    """ Print some statistics about labels for each user """
+    os.chdir(dirname)
+    p = 0
+    dfall = pd.DataFrame([])
+    # Includes data between 15 January - April
+    for root, dirs, files in os.walk(os.getcwd(), topdown=False):
+        for filename in files:
+            os.chdir(os.path.abspath(root))
+            if filename.endswith('sessions_user.csv'):
+                data = pd.read_csv(filename)
+                df = pd.DataFrame(data)
+                stressed = len(df[df.Mood == 'Stressed'])
+                sad = len(df[df.Mood == 'Sad'])
+                happy = len(df[df.Mood == 'Happy'])
+                undefined = len(df[df.Mood == 'undefined'])
+                neutral = len(df[df.Mood == 'Neutral'])
+                percentage = len(df[df.Date > '2020-02-28']) / len(df)
+                userid = str(os.path.abspath(os.path.join(os.getcwd(), "./.")))\
+                    .split('/')[-1]
+                # print(userid)
+                # print('Stressed: ' + str(stressed))
+                # print('Sad: ' + str(sad))
+                # print('Happy: ' + str(happy))
+                # print('undefined: ' + str(undefined))
+                # print('Neutral: ' + str(neutral))
+                stat = {'UserID': userid.split('-')[0], 
+                        'Useful Labels': happy + stressed + sad,
+                        'Happy': happy,
+                        'Stressed': stressed,
+                        'Sad': sad, 'undefined': undefined, 'Neutral': neutral,
+                        'Period_Percentage': percentage}
+                dfall = pd.concat([dfall, pd.DataFrame([stat])])
+                p += 1
+    print(dfall.set_index('UserID').sort_values('Useful Labels',
+                                                 ascending=False).round(2))
+    print('Undefined: ' + str(dfall.undefined.sum()))
+    print('Neutral: ' + str(dfall.Neutral.sum()))
+    print('Useful Labels: ' + str(dfall['Useful Labels'].sum()))
+    print('Happy: ' + str(dfall.Happy.sum()))
+    print('Stressed: ' + str(dfall.Stressed.sum()))
+    print('Sad: ' + str(dfall.Sad.sum()))
+    print('Total Users:' + str(p))
+
 
 
 # Workflow
