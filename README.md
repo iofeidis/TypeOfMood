@@ -1,5 +1,5 @@
 # TypeOfMood
-Reseach Effort in Emotion Recognition
+Research Effort in Emotion Recognition
 
 Emotion is a complex subjective conscious experience that combines mental states,
 psychosomatic expressions and biological reactions of the body. The rapid techno-
